@@ -1,0 +1,8 @@
+# Ignore
+bin/
+obj/
+.vscode/
+document.docx
+
+# Allow
+!/bin/Debug/*/publish/
