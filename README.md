@@ -9,5 +9,6 @@ Note that only the first element with an given tag is used.
 ## Instructions
 Clone locally and publish:
 
-`git clone https://github.com/keyvisions/FillDOCX.git`
-`dotnet publish`
+`$ git clone https://github.com/keyvisions/FillDOCX.git`
+
+`$ dotnet publish`
