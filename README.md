@@ -7,8 +7,12 @@ The code was written in order to give non programmers an intuitive way of creati
 Note that only the first element with an given tag is used.
 
 ## Instructions
-Clone locally and publish:
+Clone locally, publish and run
+
+usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<path> [--pdf] [--shorttags] [--novalue \<string>]
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
 `$ dotnet publish`
+
+`$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx`
