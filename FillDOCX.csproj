@@ -5,4 +5,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SautinSoft.Document" Version="4.3.3.5" />
+  </ItemGroup>
 </Project>

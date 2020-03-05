@@ -16,3 +16,7 @@ usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<pa
 `$ dotnet publish`
 
 `$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx`
+
+If you wish to add PDF capabilities, uncomment #define PDF in Program.cs and add the SautinSoft.Document package
+
+`$ dotnet add package SautinSoft.Document`

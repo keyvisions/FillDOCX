@@ -3,6 +3,7 @@ bin/
 obj/
 .vscode/
 document.docx
+*.pdf
 
 # Allow
 !/bin/Debug/*/publish/
