@@ -15,8 +15,6 @@ usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<pa
 
 `$ dotnet publish`
 
-`$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx`
+`$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx --pdf`
 
-If you wish to add PDF capabilities, uncomment #define PDF in Program.cs and add the SautinSoft.Document package
-
-`$ dotnet add package SautinSoft.Document`
+PDFs can be generated with either (Spire.Doc)[https://www.nuget.org/packages/Spire.Doc/] or (sautinsoft.document)[https://www.nuget.org/packages/sautinsoft.document/] package.

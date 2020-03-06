@@ -1,14 +1,11 @@
-﻿//#define PDF
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
-#if (PDF)
-using SautinSoft.Document; // dotnet add package SautinSoft.Document
-#endif
+using Spire.Doc; // dotnet add package FreeSpire.Doc
+// using SautinSoft.Document; // dotnet add package SautinSoft.Document
 
 namespace FillDOCX
 {
@@ -109,14 +106,20 @@ namespace FillDOCX
                     }
                 }
 
-#if PDF               
                 if (pdf)
                 {
-                    DocumentCore dc = DocumentCore.Load(destfile);
+                    // dotnet add package Spire.Doc
+                    Document dc = new Document();
+                    dc.LoadFromFile(destfile);
                     destfile = destfile.Replace(".docx", ".pdf");
-                    dc.Save(destfile);
+                    dc.SaveToFile(destfile, FileFormat.PDF);
+
+                    // dotnet add package SautinSoft.Document
+                    // DocumentCore dc = DocumentCore.Load(destfile);
+                    // destfile = destfile.Replace(".docx", ".pdf");
+                    // dc.Save(destfile);
                 }
-#endif
+
                 return destfile;
             }
             catch (SystemException e)
@@ -141,10 +144,8 @@ namespace FillDOCX
                     novalue = args[++i];
                 else if (args[i] == "--shorttags")
                     shortTags = true;
-#if PDF
                 else if (args[i] == "--pdf")
                     pdf = true;
-#endif                    
                 else
                     Console.Write("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--shorttags] [--novalue <string>]");
             }

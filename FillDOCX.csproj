@@ -6,6 +6,6 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="SautinSoft.Document" Version="4.3.3.5" />
+    <PackageReference Include="FreeSpire.Doc" Version="7.11.0" />
   </ItemGroup>
 </Project>
