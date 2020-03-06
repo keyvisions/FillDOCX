@@ -17,4 +17,4 @@ usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<pa
 
 `$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx --pdf`
 
-PDFs can be generated with either (Spire.Doc)[https://www.nuget.org/packages/Spire.Doc/] or (sautinsoft.document)[https://www.nuget.org/packages/sautinsoft.document/] package.
+PDFs can be generated with either [Spire.Doc](https://www.nuget.org/packages/Spire.Doc/) or [sautinsoft.document](https://www.nuget.org/packages/sautinsoft.document/) package.
