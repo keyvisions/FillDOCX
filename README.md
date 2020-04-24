@@ -6,6 +6,11 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.3.0
+Introduced the @@\<tag>.\<tag> construct, if placed inside a table row then all children elements of @@\<tag> are rendered in separate rows, else, only the first child of @@\<tag> is rendered.
+
+This construct is usefull, for example, to handle purchase orders with multiple lines, see the order.docx template
+
 ## Instructions
 Clone locally, publish and run
 

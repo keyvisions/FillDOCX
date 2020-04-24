@@ -31,10 +31,18 @@ namespace FillDOCX
                 {
                     if (nodes[0].InnerText != nodes[0].LastChild.InnerText) // Has children
                     {
-                        // Repeating placeholders must be placed inside tables, the subtemplate matches the row containing the placeholder
+                        // Repeating placeholders MUST be placed inside tables, the subtemplate matches the row containing the placeholder
                         subtemplate = new Regex(@"\<w\:tr(?:(?!\<w\:tr).)*?@@" + tag + @".*?\<\/w\:tr\>", RegexOptions.Compiled).Match(template).Value;
-                        foreach (XmlElement node in nodes)
-                            value += Fill(subtemplate, node, novalue, level + 1);
+                        if (subtemplate == "")
+                        {
+                            subtemplate = new Regex(@"\<w\:t\>@@" + tag + @".*?\<\/w\:t\>", RegexOptions.Compiled).Match(template).Value;
+                            if (subtemplate == "")
+                                return;
+                            value += Fill(subtemplate, (XmlElement)nodes[0], novalue, level + 1);
+                        }
+                        else
+                            foreach (XmlElement node in nodes)
+                                value += Fill(subtemplate, node, novalue, level + 1);
                     }
                     else
                         value = nodes[0].InnerXml;
