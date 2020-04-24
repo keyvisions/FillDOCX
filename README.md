@@ -7,8 +7,10 @@ The code was written in order to give non programmers an intuitive way of creati
 Note that only the first element with an given tag is used.
 
 ## Version 0.3.0
-Introduced the @@\<tag>.\<tag> construct, if placed inside a table row then all children elements of @@\<tag> are rendered in separate rows, else, only the first child of @@\<tag> is rendered.
+Improved the @@\<tag>.\<tag> construct introduced in 0.2.0, now, if placed outside of a table it renders only the first child of @@\<tag>, before, it clobbered the resulting document.docx.
 
+## Version 0.2.0
+Introduced the @@\<tag>.\<tag> construct, it _MUST_ be placed inside a table row, with the effect that all children elements of @@\<tag> are rendered in separate rows.
 This construct is usefull, for example, to handle purchase orders with multiple lines, see the order.docx template
 
 ## Instructions
