@@ -6,6 +6,11 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.4.0
+Fixed error raised by empty XML elements.
+If the text [hidden] appears in a table row with @@\<tag>, the table row is deleted: practical when a @@\<tag> is set to [hidden].
+@@\<tag> should ALWAYS be followed by a non alphanumeric charcater: DOCX documents inserts spurios markup after the sequence @@.
+
 ## Version 0.3.0
 Improved the @@\<tag>.\<tag> construct introduced in 0.2.0, now, if placed outside of a table it renders only the first child of @@\<tag>, before, it clobbered the resulting document.docx.
 

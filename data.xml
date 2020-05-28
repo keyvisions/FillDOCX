@@ -34,5 +34,15 @@
             <USPrice>39.98</USPrice>
             <ShipDate>1999-05-21</ShipDate>
         </Item>
+        <Item>
+            <PartNumber>934-AA</PartNumber>
+            <ProductName>Troll</ProductName>
+            <Quantity>20</Quantity>
+            <USPrice>39.98</USPrice>
+            <ShipDate>1999-05-21</ShipDate>
+        </Item>
     </Items>
+    <actions>
+        <hide>[hidden]</hide>
+    </actions>
 </PurchaseOrder>  

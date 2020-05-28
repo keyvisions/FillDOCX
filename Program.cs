@@ -4,8 +4,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
-using Spire.Doc; // dotnet add package FreeSpire.Doc
-// using SautinSoft.Document; // dotnet add package SautinSoft.Document
+//using Spire.Doc; // dotnet add package FreeSpire.Doc
+using SautinSoft.Document; // dotnet add package SautinSoft.Document
 
 namespace FillDOCX
 {
@@ -29,27 +29,30 @@ namespace FillDOCX
                 string subtemplate = level == 1 ? $"@@{tag}" : $"@@{data.Name}.{tag}", value = novalue;
                 if (nodes.Count > 0)
                 {
-                    if (nodes[0].InnerText != nodes[0].LastChild.InnerText) // Has children
+                    if (nodes[0].HasChildNodes && nodes[0].InnerText != nodes[0].LastChild.InnerText) // Has children
                     {
                         // Repeating placeholders MUST be placed inside tables, the subtemplate matches the row containing the placeholder
-                        subtemplate = new Regex(@"\<w\:tr(?:(?!\<w\:tr).)*?@@" + tag + @".*?\<\/w\:tr\>", RegexOptions.Compiled).Match(template).Value;
+                        subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + tag + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
                         if (subtemplate == "")
                         {
-                            subtemplate = new Regex(@"\<w\:t\>@@" + tag + @".*?\<\/w\:t\>", RegexOptions.Compiled).Match(template).Value;
+                            subtemplate = new Regex(@"<w:t>@@" + tag + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
                             if (subtemplate == "")
                                 return;
                             value += Fill(subtemplate, (XmlElement)nodes[0], novalue, level + 1);
                         }
                         else
+                        {
                             foreach (XmlElement node in nodes)
                                 value += Fill(subtemplate, node, novalue, level + 1);
+                            if (value.Contains("[hidden]"))
+                                value = "";
+                        }
                     }
                     else
                         value = nodes[0].InnerXml;
                 }
                 template = template.Replace(subtemplate, value);
             });
-
             return template;
         }
 
@@ -87,17 +90,28 @@ namespace FillDOCX
                         {
                             body = body.Replace(@"@", @"@@v");
                             // Clean up document.xml: Microsoft Word inserts spurious tags between @@ and <tag> that prevent proper @@<tag> identification.
-                            foreach (Match match in new Regex(@"@@v</w:t></w:r>.*?<w:t>([0-9]+)", RegexOptions.Compiled).Matches(body))
+                            foreach (Match match in new Regex(@"@@v<\/w:t><\/w:r>.*?<w:t>([0-9]+)", RegexOptions.Compiled).Matches(body))
                             {
                                 body = body.Replace(match.Value, @"@@v" + match.Groups[1].Value);
                             }
                         }
                         else
+                        {
                             // Clean up document.xml: Microsoft Word inserts spurious tags between @@ and <tag> that prevent proper @@<tag> identification.
-                            foreach (Match match in new Regex(@"(@@|@@([a-z]\w*)\.)</w:t></w:r>.*?<w:t>", RegexOptions.Compiled).Matches(body))
+                            bool replace;
+                            do
                             {
-                                body = body.Replace(match.Value, match.Groups[1].Value);
-                            }
+                                MatchCollection matches = new Regex(@"(@@\w*?\.?\w*?)<\/w:t><\/w:r>.*?<w:t( .*?>|>)(.)", RegexOptions.Compiled).Matches(body);
+
+                                replace = false;
+                                foreach (Match match in matches)
+                                    if (System.Char.IsLetterOrDigit(match.Groups[3].Value, 0) || match.Groups[3].Value == @".")
+                                    {
+                                        body = body.Replace(match.Value, match.Groups[1].Value + match.Groups[3].Value);
+                                        replace = true;
+                                    }
+                            } while (replace);
+                        }
 
                         int limit = 0;
                         while (placeholder.IsMatch(body) && limit < 5)
@@ -117,15 +131,15 @@ namespace FillDOCX
                 if (pdf)
                 {
                     // dotnet add package Spire.Doc
-                    Document dc = new Document();
-                    dc.LoadFromFile(destfile);
-                    destfile = destfile.Replace(".docx", ".pdf");
-                    dc.SaveToFile(destfile, FileFormat.PDF);
+                    // Document dc = new Document();
+                    // dc.LoadFromFile(destfile);
+                    // destfile = destfile.Replace(".docx", ".pdf");
+                    // dc.SaveToFile(destfile, FileFormat.PDF);
 
                     // dotnet add package SautinSoft.Document
-                    // DocumentCore dc = DocumentCore.Load(destfile);
-                    // destfile = destfile.Replace(".docx", ".pdf");
-                    // dc.Save(destfile);
+                    DocumentCore dc = DocumentCore.Load(destfile);
+                    destfile = destfile.Replace(".docx", ".pdf");
+                    dc.Save(destfile);
                 }
 
                 return destfile;
