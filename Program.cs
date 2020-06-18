@@ -67,6 +67,8 @@ namespace FillDOCX
                 if (template == destfile)
                     throw new ArgumentException("Template cannot be equal to destination");
 
+                if (Path.GetDirectoryName(destfile) != "")
+                    Directory.CreateDirectory(Path.GetDirectoryName(destfile)); // Create directory if it does not exist
                 File.Copy(template, destfile, true);
 
                 using (ZipArchive zipArchive = new ZipArchive(File.Open(destfile, FileMode.Open), ZipArchiveMode.Update))
