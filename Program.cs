@@ -158,11 +158,11 @@ namespace FillDOCX
 
             for (int i = 0; i < args.Length; ++i)
             {
-                if ((args[i] == "--template" || args[i] == "-t") && args[i + 1].EndsWith(".docx"))
+                if ((args[i] == "--template" || args[i] == "-t") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
                     template = args[++i];
                 else if (args[i] == "--xml" || args[i] == "-x")
                     xml = args[++i];
-                else if ((args[i] == "--destfile" || args[i] == "-d") && args[i + 1].EndsWith(".docx"))
+                else if ((args[i] == "--destfile" || args[i] == "-d") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
                     destfile = args[++i];
                 else if (args[i] == "--novalue")
                     novalue = args[++i];
