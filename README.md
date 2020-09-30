@@ -28,6 +28,8 @@ usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<pa
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
+`$ dotnet add package SautinSoft.Document`
+
 `$ dotnet publish`
 
 `$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx --pdf`
