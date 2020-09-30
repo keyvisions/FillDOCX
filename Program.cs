@@ -56,7 +56,7 @@ namespace FillDOCX
             return template;
         }
 
-        public static string FillDOCX(string template, string xml, string destfile, string novalue, bool pdf = false, bool shortTags = false)
+        public static string FillDOCX(string template, string xml, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
         {
             XmlDocument data = new XmlDocument();
             data.PreserveWhitespace = true;
@@ -67,8 +67,12 @@ namespace FillDOCX
                 if (template == destfile)
                     throw new ArgumentException("Template cannot be equal to destination");
 
+                if (File.Exists(destfile) && !overwrite)
+                    return destfile;
+
                 if (Path.GetDirectoryName(destfile) != "")
                     Directory.CreateDirectory(Path.GetDirectoryName(destfile)); // Create directory if it does not exist
+
                 File.Copy(template, destfile, true);
 
                 using (ZipArchive zipArchive = new ZipArchive(File.Open(destfile, FileMode.Open), ZipArchiveMode.Update))
@@ -154,7 +158,7 @@ namespace FillDOCX
         static void Main(string[] args)
         {
             string template = @".\order.docx", xml = @"data.xml", destfile = @"document.docx", novalue = @"***";
-            bool pdf = false, shortTags = false;
+            bool overwrite = false, pdf = false, shortTags = false;
 
             for (int i = 0; i < args.Length; ++i)
             {
@@ -164,6 +168,8 @@ namespace FillDOCX
                     xml = args[++i];
                 else if ((args[i] == "--destfile" || args[i] == "-d") && args[i + 1].EndsWith(".docx"))
                     destfile = args[++i];
+                else if (args[i] == "--overwrite" || args[i] == "-o")
+                    overwrite = true;
                 else if (args[i] == "--novalue")
                     novalue = args[++i];
                 else if (args[i] == "--shorttags")
@@ -171,10 +177,10 @@ namespace FillDOCX
                 else if (args[i] == "--pdf")
                     pdf = true;
                 else
-                    Console.Write("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--shorttags] [--novalue <string>]");
+                    Console.Write("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
             }
 
-            Console.WriteLine(FillDOCX(template, xml, destfile, novalue, pdf, shortTags));
+            Console.WriteLine(FillDOCX(template, xml, destfile, novalue, overwrite, pdf, shortTags));
         }
     }
 }

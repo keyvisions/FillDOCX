@@ -6,6 +6,9 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.5.0
+Added overwrite flag, when set, does not overwrite the destination file if it exists.
+
 ## Version 0.4.0
 Fixed error raised by empty XML elements.
 If the text [hidden] appears in a table row with @@\<tag>, the table row is deleted: practical when a @@\<tag> is set to [hidden].
@@ -21,7 +24,7 @@ This construct is usefull, for example, to handle purchase orders with multiple 
 ## Instructions
 Clone locally, publish and run
 
-usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<path> [--pdf] [--shorttags] [--novalue \<string>]
+usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--novalue \<string>]
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
