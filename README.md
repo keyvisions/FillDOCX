@@ -7,7 +7,7 @@ The code was written in order to give non programmers an intuitive way of creati
 Note that only the first element with an given tag is used.
 
 ## Version 0.5.0
-Added overwrite flag, when set, does not overwrite the destination file if it exists.
+Added overwrite flag, when set, overwrites the destination file if it exists.
 
 ## Version 0.4.0
 Fixed error raised by empty XML elements.
