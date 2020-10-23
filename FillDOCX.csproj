@@ -1,12 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!--OutputType>library</OutputType-->
     <OutputType>exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <Version>0.6.0</Version>
+    <Company>KeyVisions</Company>
+    <Authors>Giancarlo Trevisan</Authors>
+    <Product>FillDOCX</Product>
+    <Description>Merge DOCX document and XML file: XML elements are referenced with @@&lt;name&gt; (always add a space after a name)</Description>
+    <Copyright>©2020</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="FreeSpire.Doc" Version="7.11.0" />
-    <PackageReference Include="SautinSoft.Document" Version="4.5.6.17" />
+    <PackageReference Include="System.Drawing.Common" Version="4.6.0" />
   </ItemGroup>
 </Project>

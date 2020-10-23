@@ -4,8 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
-using Spire.Doc; // dotnet add package FreeSpire.Doc
-//using SautinSoft.Document; // dotnet add package SautinSoft.Document
+using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 2-3 pages)
 
 namespace FillDOCX
 {
@@ -141,11 +140,6 @@ namespace FillDOCX
                     dc.LoadFromFile(destfile);
                     destfile = destfile.Replace(".docx", ".pdf");
                     dc.SaveToFile(destfile, FileFormat.PDF);
-
-                    // dotnet add package SautinSoft.Document
-                    // DocumentCore dc = DocumentCore.Load(destfile);
-                    // destfile = destfile.Replace(".docx", ".pdf");
-                    // dc.Save(destfile);
                 }
 
                 return destfile;
@@ -158,7 +152,7 @@ namespace FillDOCX
         static void Main(string[] args)
         {
             string template = @".\order.docx", xml = @"data.xml", destfile = @"document.docx", novalue = @"***";
-            bool overwrite = false, pdf = false, shortTags = false;
+            bool overwrite = true, pdf = true, shortTags = false;
 
             for (int i = 0; i < args.Length; ++i)
             {
