@@ -6,6 +6,10 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.7.0
+Solved bug associated to @@\<tag>.\<tag> construct that referred to data elements with a single child.
+Added attribute hidden="true": when an element is assigned this attribute, its content will not be rendered. See also [hidden] Version 0.4.0.
+
 ## Version 0.6.0
 Opted for FreeSpire.Doc for PDF generation: allows the creation of PDF with up to 3 pages before inserting an "unlicensed" text.
 

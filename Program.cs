@@ -4,7 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
-using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 2-3 pages)
+using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 3 pages)
 
 namespace FillDOCX
 {
@@ -14,6 +14,9 @@ namespace FillDOCX
 
         private static string Fill(string template, XmlElement data, string novalue = "***", int level = 1)
         {
+            if (data.Attributes.GetNamedItem("hidden") != null)
+                return "";
+
             List<string> tags = new List<string>();
             foreach (Match match in placeholder.Matches(template))
             {
@@ -28,7 +31,7 @@ namespace FillDOCX
                 string subtemplate = level == 1 ? $"@@{tag}" : $"@@{data.Name}.{tag}", value = novalue;
                 if (nodes.Count > 0)
                 {
-                    if (nodes[0].HasChildNodes && nodes[0].InnerText != nodes[0].LastChild.InnerText) // Has children
+                    if (nodes[0].HasChildNodes && level == 1)
                     {
                         // Repeating placeholders MUST be placed inside tables, the subtemplate matches the row containing the placeholder
                         subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + tag + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
@@ -47,6 +50,8 @@ namespace FillDOCX
                                 value = "";
                         }
                     }
+                    else if (nodes[0].Attributes.GetNamedItem("hidden") != null)
+                        value = "";
                     else
                         value = nodes[0].InnerXml;
                 }

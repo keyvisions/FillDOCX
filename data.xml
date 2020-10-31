@@ -19,7 +19,7 @@
         <Country>USA</Country>
     </Billing>
     <DeliveryNotes>Please leave packages in shed by driveway.</DeliveryNotes>
-    <Items>
+    <Items> <!-- Subnode handling since Version 0.2.0 -->
         <Item>
             <PartNumber>872-AA</PartNumber>
             <ProductName>Lawnmower</ProductName>
@@ -43,6 +43,15 @@
         </Item>
     </Items>
     <actions>
-        <hide>[hidden]</hide>
+        <action><do>Clean</do></action> <!-- Before Version 0.7.0 this node was not handle correctly -->
+        <action>
+            <do>Verify</do>
+            <time hidden="true">30 min</time> <!-- Introduced hidden attribute Version 0.7.0 -->
+        </action>
+        <action hidden="true">
+            <do hidden="true">Verify integrity</do>
+            <time>1 hour</time>
+        </action>
+        <action><do>Package</do></action>
     </actions>
 </PurchaseOrder>  
