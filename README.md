@@ -6,6 +6,9 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.7.1
+Revised [hidden] behaviour, if it is present inside a table the whole table is not  rendered.
+
 ## Version 0.7.0
 Solved bug associated to @@\<tag>.\<tag> construct that referred to data elements with a single child.
 Added attribute hidden="true": when an element is assigned this attribute, its content will not be rendered. See also [hidden] Version 0.4.0.
@@ -18,7 +21,7 @@ Added overwrite flag, when set, overwrites the destination file if it exists, by
 
 ## Version 0.4.0
 Fixed error raised by empty XML elements.
-If the text [hidden] appears in a table row with @@\<tag>, the table row is deleted: practical when a @@\<tag> is set to [hidden].
+If the text [hidden] appears in a table row with @@\<tag>, the table row is not rendered: practical when a @@\<tag> is set to [hidden].
 @@\<tag> should ALWAYS be followed by a non alphanumeric character: DOCX documents inserts spurios markup after the sequence @@.
 
 ## Version 0.3.0

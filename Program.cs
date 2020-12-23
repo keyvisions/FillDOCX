@@ -31,7 +31,7 @@ namespace FillDOCX
                 string subtemplate = level == 1 ? $"@@{tag}" : $"@@{data.Name}.{tag}", value = novalue;
                 if (nodes.Count > 0)
                 {
-                    if (nodes[0].HasChildNodes && level == 1)
+                    if (nodes[0].HasChildNodes && nodes[0].FirstChild.GetType() != typeof(System.Xml.XmlText) && level == 1)
                     {
                         // Repeating placeholders MUST be placed inside tables, the subtemplate matches the row containing the placeholder
                         subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + tag + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
@@ -46,8 +46,10 @@ namespace FillDOCX
                         {
                             foreach (XmlElement node in nodes)
                                 value += Fill(subtemplate, node, novalue, level + 1);
-                            if (value.Contains("[hidden]"))
+                            if (value.Contains("[hidden]")) { // Remove whole table
+                                subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + subtemplate + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
                                 value = "";
+                            }
                         }
                     }
                     else if (nodes[0].Attributes.GetNamedItem("hidden") != null)
@@ -157,7 +159,7 @@ namespace FillDOCX
         static void Main(string[] args)
         {
             string template = @".\order.docx", xml = @"data.xml", destfile = @"document.docx", novalue = @"***";
-            bool overwrite = true, pdf = true, shortTags = false;
+            bool overwrite = false, pdf = false, shortTags = false;
 
             for (int i = 0; i < args.Length; ++i)
             {

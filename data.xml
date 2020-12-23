@@ -43,7 +43,7 @@
         </Item>
     </Items>
     <actions>
-        <action><do>Clean</do></action> <!-- Before Version 0.7.0 this node was not handle correctly -->
+        <action><do>[hidden]</do></action> <!-- Before Version 0.7.0 this node was not handled correctly -->
         <action>
             <do>Verify</do>
             <time hidden="true">30 min</time> <!-- Introduced hidden attribute Version 0.7.0 -->
