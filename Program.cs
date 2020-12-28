@@ -46,7 +46,8 @@ namespace FillDOCX
                         {
                             foreach (XmlElement node in nodes)
                                 value += Fill(subtemplate, node, novalue, level + 1);
-                            if (value.Contains("[hidden]")) { // Remove whole table
+                            if (value.Contains("[hidden]"))
+                            { // Remove whole table
                                 subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + subtemplate + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
                                 value = "";
                             }
@@ -74,7 +75,7 @@ namespace FillDOCX
                     throw new ArgumentException("Template cannot be equal to destination");
 
                 if (File.Exists(destfile) && !overwrite)
-                    return destfile;
+                    goto pdf; // return destfile;
 
                 if (Path.GetDirectoryName(destfile) != "")
                     Directory.CreateDirectory(Path.GetDirectoryName(destfile)); // Create directory if it does not exist
@@ -140,6 +141,7 @@ namespace FillDOCX
                     }
                 }
 
+            pdf:
                 if (pdf)
                 {
                     // dotnet add package Spire.Doc
