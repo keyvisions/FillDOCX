@@ -34,10 +34,10 @@ namespace FillDOCX
                     if (nodes[0].HasChildNodes && nodes[0].FirstChild.GetType() != typeof(System.Xml.XmlText) && level == 1)
                     {
                         // Repeating placeholders MUST be placed inside tables, the subtemplate matches the row containing the placeholder
-                        subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + tag + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
+                        subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + Regex.Escape(tag) + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
                         if (subtemplate == "")
                         {
-                            subtemplate = new Regex(@"<w:t>@@" + tag + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
+                            subtemplate = new Regex(@"<w:t>@@" + Regex.Escape(tag) + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
                             if (subtemplate == "")
                                 return;
                             value += Fill(subtemplate, (XmlElement)nodes[0], novalue, level + 1);
@@ -48,7 +48,7 @@ namespace FillDOCX
                                 value += Fill(subtemplate, node, novalue, level + 1);
                             if (value.Contains("[hidden]"))
                             { // Remove whole table
-                                subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + subtemplate + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
+                                subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + Regex.Escape(subtemplate) + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
                                 value = "";
                             }
                         }
