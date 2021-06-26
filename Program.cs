@@ -179,8 +179,10 @@ namespace FillDOCX
                     shortTags = true;
                 else if (args[i] == "--pdf")
                     pdf = true;
-                else
-                    Console.Write("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
+                else {
+                    Console.WriteLine("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
+                    return;
+                }
             }
 
             Console.WriteLine(FillDOCX(template, xml, destfile, novalue, overwrite, pdf, shortTags));
