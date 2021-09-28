@@ -147,10 +147,12 @@ namespace FillDOCX
                     // dotnet add package Spire.Doc
                     Document dc = new Document();
                     dc.LoadFromFile(destfile);
+                    ToPdfParameterList parms = new ToPdfParameterList() {
+                        IsEmbeddedAllFonts = true
+                    };
                     destfile = destfile.Replace(".docx", ".pdf");
-                    dc.SaveToFile(destfile, FileFormat.PDF);
+                    dc.SaveToFile(destfile, parms);
                 }
-
                 return destfile;
             }
             catch (SystemException e)
