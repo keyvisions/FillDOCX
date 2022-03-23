@@ -45,6 +45,6 @@ usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<pa
 
 `$ dotnet publish`
 
-`$ dotnet run -t ./order.docx -x ./data.xml -d ./document.docx --pdf`
+`$ dotnet run -t ./order.docx -x ./order.xml -d ./document.docx --pdf`
 
 PDFs can be generated with the [Spire.Doc](https://www.nuget.org/packages/Spire.Doc/) package.

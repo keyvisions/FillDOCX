@@ -151,8 +151,12 @@ namespace FillDOCX
                             if (items.Count > 0 && File.Exists(items[0].InnerText))
                             {
                                 // Console.WriteLine($"Replace {entry.Name} with {items[0].InnerText}");
-                                zipArchive.CreateEntryFromFile(items[0].InnerText, entry.FullName);
-                                entry.Delete();
+                                try
+                                {
+                                    zipArchive.CreateEntryFromFile(items[0].InnerText, entry.FullName);
+                                    entry.Delete();
+                                }
+                                catch { }
                             }
                         }
                 }
