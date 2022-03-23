@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <PurchaseOrder>
+    <image1>.\media\logo_dark.png</image1>
     <PurchaseOrderNumber>99503</PurchaseOrderNumber>
     <OrderDate>1999-10-20</OrderDate>
     <Shipping>

@@ -29,6 +29,7 @@ namespace FillDOCX
             {
                 XmlNodeList nodes = data.GetElementsByTagName(tag);
                 string subtemplate = level == 1 ? $"@@{tag}" : $"@@{data.Name}.{tag}", value = novalue;
+
                 if (nodes.Count > 0)
                 {
                     if (nodes[0].HasChildNodes && nodes[0].FirstChild.GetType() != typeof(System.Xml.XmlText) && level == 1)
@@ -58,6 +59,9 @@ namespace FillDOCX
                     else
                         value = nodes[0].InnerXml;
                 }
+                if (Regex.Match(tag, @"^image\d+").Success)
+                    value = "";
+
                 template = template.Replace(subtemplate, value);
             });
             return template;
@@ -139,6 +143,18 @@ namespace FillDOCX
                         writer.Flush();
                         writer.Close();
                     }
+
+                    foreach (ZipArchiveEntry entry in zipArchive.Entries)
+                        if (Regex.Match(entry.Name, @"^image\d+").Success)
+                        {
+                            XmlNodeList items = data.GetElementsByTagName(entry.Name.Substring(0, entry.Name.IndexOf('.')));
+                            if (items.Count > 0 && File.Exists(items[0].InnerText))
+                            {
+                                // Console.WriteLine($"Replace {entry.Name} with {items[0].InnerText}");
+                                zipArchive.CreateEntryFromFile(items[0].InnerText, entry.FullName);
+                                entry.Delete();
+                            }
+                        }
                 }
 
             pdf:
@@ -147,7 +163,8 @@ namespace FillDOCX
                     // dotnet add package Spire.Doc
                     Document dc = new Document();
                     dc.LoadFromFile(destfile);
-                    ToPdfParameterList parms = new ToPdfParameterList() {
+                    ToPdfParameterList parms = new ToPdfParameterList()
+                    {
                         IsEmbeddedAllFonts = true
                     };
                     destfile = destfile.Replace(".docx", ".pdf");
@@ -181,7 +198,8 @@ namespace FillDOCX
                     shortTags = true;
                 else if (args[i] == "--pdf")
                     pdf = true;
-                else {
+                else
+                {
                     Console.WriteLine("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
                     return;
                 }

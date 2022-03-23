@@ -6,8 +6,11 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.8.0
+Document images are now replaceable. The DOCX format includes, in the word/media folder, the images embedded in the document, these images are notably named image\<number>.\<extension>. If the XML data includes \<image\<number>> elements their value is interpreted as the path of the new image, image file that replaces the embedded image. Note that FillDOCX does not add images to the DOCX file, it merely replaces existing images.
+
 ## Version 0.7.1
-Revised [hidden] behaviour, if it is present inside a table the whole table is not  rendered.
+Revised [hidden] behaviour, if it is present inside a table the whole table is not rendered.
 
 ## Version 0.7.0
 Solved bug associated to @@\<tag>.\<tag> construct that referred to data elements with a single child.
