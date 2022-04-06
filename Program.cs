@@ -28,6 +28,8 @@ namespace FillDOCX
             tags.ForEach(tag =>
             {
                 XmlNodeList nodes = data.GetElementsByTagName(tag);
+                if (nodes.Count == 0)
+                    nodes = data.GetElementsByTagName(tag.ToLower());
                 string subtemplate = level == 1 ? $"@@{tag}" : $"@@{data.Name}.{tag}", value = novalue;
 
                 if (nodes.Count > 0)
@@ -61,6 +63,9 @@ namespace FillDOCX
                 }
                 if (Regex.Match(tag, @"^image\d+").Success)
                     value = "";
+
+                if (value == "[hidden]")
+                    subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + Regex.Escape(subtemplate) + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
 
                 template = template.Replace(subtemplate, value);
             });
@@ -183,7 +188,7 @@ namespace FillDOCX
         }
         static void Main(string[] args)
         {
-            string template = @".\order.docx", xml = @"data.xml", destfile = @"document.docx", novalue = @"***";
+            string template = @".\order.docx", xml = @".\order.xml", destfile = @"document.docx", novalue = @"***";
             bool overwrite = false, pdf = false, shortTags = false;
 
             for (int i = 0; i < args.Length; ++i)
