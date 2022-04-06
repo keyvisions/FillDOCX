@@ -67,7 +67,8 @@ namespace FillDOCX
                 if (value == "[hidden]")
                     subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + Regex.Escape(subtemplate) + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
 
-                template = template.Replace(subtemplate, value);
+                if (subtemplate != "")
+                    template = template.Replace(subtemplate, value);
             });
             return template;
         }

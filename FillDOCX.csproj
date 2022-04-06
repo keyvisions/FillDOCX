@@ -3,7 +3,7 @@
     <OutputType>exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <Version>0.8.0</Version>
+    <Version>0.8.1</Version>
     <Company>KeyVisions</Company>
     <Authors>Giancarlo Trevisan</Authors>
     <Product>FillDOCX</Product>
