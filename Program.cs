@@ -161,8 +161,9 @@ namespace FillDOCX
                                 {
                                     zipArchive.CreateEntryFromFile(items[0].InnerText, entry.FullName);
                                     entry.Delete();
+                                } 
+                                catch {
                                 }
-                                catch { }
                             }
                         }
                 }
@@ -180,12 +181,13 @@ namespace FillDOCX
                     destfile = destfile.Replace(".docx", ".pdf");
                     dc.SaveToFile(destfile, parms);
                 }
-                return destfile;
             }
             catch (SystemException e)
             {
-                return String.Format("{0}: {1}", e.GetType().Name, e.Message);
+                if (e.GetType().Name != "InvalidOperationException") // Collection was modified; enumeration operation may not execute.
+                    return String.Format("{0}: {1}", e.GetType().Name, e.Message);
             }
+            return destfile;
         }
         static void Main(string[] args)
         {
@@ -203,7 +205,7 @@ namespace FillDOCX
                 else if (args[i] == "--overwrite" || args[i] == "-o")
                     overwrite = true;
                 else if (args[i] == "--novalue")
-                    novalue = args[++i];
+                    novalue = i + 1 < args.Length ? args[++i] : "";
                 else if (args[i] == "--shorttags")
                     shortTags = true;
                 else if (args[i] == "--pdf")

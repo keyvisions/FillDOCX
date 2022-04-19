@@ -6,6 +6,10 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.8.2
+Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string the end of the command line is not included in args[].
+In Version 0.8.0, when images are replaced, the unconsequential exception "Collection was modified; enumeration operation may not execute." was reised, not anymore. 
+
 ## Version 0.8.1
 XML Documents are case sensitive, therefore, placeholders should match XML elements. If there is no XML Element associated to a given placeholder, the lowercase XML Element is now searched.
 Version 0.7.1 was only applicable to repeating placeholders now also to non-repeating.
