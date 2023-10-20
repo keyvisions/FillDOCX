@@ -6,6 +6,9 @@ The code was written in order to give non programmers an intuitive way of creati
 
 Note that only the first element with an given tag is used.
 
+## Version 0.9.0
+FillDOCX now accepts JSON data that is transformed in XML and than business as usual. [hidden] bugged.
+
 ## Version 0.8.2
 Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string the end of the command line is not included in args[].
 In Version 0.8.0, when images are replaced, the unconsequential exception "Collection was modified; enumeration operation may not execute." was reised, not anymore. 
