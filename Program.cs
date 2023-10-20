@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
 using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 3 pages)
+using System.Security.AccessControl;
+using System.Security;
+using System.Data;
 
 namespace FillDOCX
 {
@@ -73,11 +76,45 @@ namespace FillDOCX
             return template;
         }
 
-        public static string FillDOCX(string template, string xml, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
+        public static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
         {
             XmlDocument data = new XmlDocument();
             data.PreserveWhitespace = true;
-            try { data.Load(xml); } catch { data.LoadXml(xml); }
+
+            switch (mime)
+            {
+                case "application/xml":
+                    try { data.Load(txt); } catch { data.LoadXml(txt); }
+                    break;
+
+                case "application/json":
+                    try
+                    {
+                        if (txt.IndexOfAny(Path.GetInvalidPathChars()) == -1)
+                        {
+                            StreamReader sr = new StreamReader(txt);
+                            txt = sr.ReadToEnd();
+                            sr.Dispose();
+                        }
+                        Console.Write(json2xml(txt));
+                        data.LoadXml(json2xml(txt));
+                    }
+                    catch (SystemException e)
+                    {
+                        return String.Format("{0}: {1}", e.GetType().Name, e.Message);
+                    }
+                    break;
+
+                default:
+                    try
+                    {
+                        throw new ArgumentException("Specify --xml or --json");
+                    }
+                    catch (SystemException e)
+                    {
+                        return String.Format("{0}: {1}", e.GetType().Name, e.Message);
+                    }
+            }
 
             try
             {
@@ -161,25 +198,12 @@ namespace FillDOCX
                                 {
                                     zipArchive.CreateEntryFromFile(items[0].InnerText, entry.FullName);
                                     entry.Delete();
-                                } 
-                                catch {
+                                }
+                                catch
+                                {
                                 }
                             }
                         }
-                }
-
-            pdf:
-                if (pdf)
-                {
-                    // dotnet add package Spire.Doc
-                    Document dc = new Document();
-                    dc.LoadFromFile(destfile);
-                    ToPdfParameterList parms = new ToPdfParameterList()
-                    {
-                        IsEmbeddedAllFonts = true
-                    };
-                    destfile = destfile.Replace(".docx", ".pdf");
-                    dc.SaveToFile(destfile, parms);
                 }
             }
             catch (SystemException e)
@@ -187,11 +211,82 @@ namespace FillDOCX
                 if (e.GetType().Name != "InvalidOperationException") // Collection was modified; enumeration operation may not execute.
                     return String.Format("{0}: {1}", e.GetType().Name, e.Message);
             }
+        pdf:
+            CreatePDF(destfile, pdf);
             return destfile;
+        }
+        private static void CreatePDF(string destfile, bool pdf)
+        {
+            if (pdf)
+            {
+                // dotnet add package Spire.Doc
+                Document dc = new Document();
+                dc.LoadFromFile(destfile);
+                ToPdfParameterList parms = new ToPdfParameterList()
+                {
+                    IsEmbeddedAllFonts = true
+                };
+                destfile = destfile.Replace(".docx", ".pdf");
+                dc.SaveToFile(destfile, parms);
+            }
+        }
+
+        // https://json.org/json-it.html
+        private static string _json = "";
+        private static string json2xml(string json, string name = "root")
+        {
+            if (json == "")
+                return "";
+
+            Regex regex = new Regex(@"^\s*\{\s*""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Match match = regex.Match(json);
+            if (match.Success)
+            {
+                if (name != "")
+                    return String.Format("<{0}>{1}</{0}>", name, json2xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + json2xml(_json, "");
+                else
+                    return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
+            }
+
+            regex = new Regex(@"^\s*\[\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            match = regex.Match(json);
+            if (match.Success)
+            {
+                if (name != "")
+                    return String.Format("<{0}>{1}</{0}>", name, json2xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + json2xml(_json, "");
+                else
+                    return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
+            }
+
+            regex = new Regex(@"^""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            match = regex.Match(json);
+            if (match.Success)
+                return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value);
+
+            regex = new Regex(@"^(?<value>true|false|null|-?(?:0|[1-9])[0-9]*(?:\.[0-9]+)?(?:e[\-+]?[0-9]+)?|""(?:\\""|.)*?"")\s*,?\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            match = regex.Match(json);
+            if (match.Success)
+            {
+                if (name == "" || name == "root")
+                    name = "value";
+                string value = match.Groups["value"].Value.Trim('\"');
+                if (value == "null")
+                    value = "";
+                return String.Format("<{0}>{1}</{0}>", name, SecurityElement.Escape(value)) + json2xml(match.Groups["rest"].Value);
+            }
+
+            regex = new Regex(@"^(?:[\]}]\s*,?\s*)(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            match = regex.Match(json);
+            if (match.Success) {
+                _json = match.Groups["rest"].Value;
+                return "";
+            }
+
+            throw new SyntaxErrorException("Invalid JSON syntax");
         }
         static void Main(string[] args)
         {
-            string template = @".\order.docx", xml = @".\order.xml", destfile = @"document.docx", novalue = @"***";
+            string template = @".\order.docx", data = @".\order.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml";
             bool overwrite = false, pdf = false, shortTags = false;
 
             for (int i = 0; i < args.Length; ++i)
@@ -199,7 +294,15 @@ namespace FillDOCX
                 if ((args[i] == "--template" || args[i] == "-t") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
                     template = args[++i];
                 else if (args[i] == "--xml" || args[i] == "-x")
-                    xml = args[++i];
+                {
+                    mime = "application/xml";
+                    data = args[++i];
+                }
+                else if (args[i] == "--json")
+                {
+                    mime = "application/json";
+                    data = args[++i];
+                }
                 else if ((args[i] == "--destfile" || args[i] == "-d") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
                     destfile = args[++i];
                 else if (args[i] == "--overwrite" || args[i] == "-o")
@@ -212,12 +315,12 @@ namespace FillDOCX
                     pdf = true;
                 else
                 {
-                    Console.WriteLine("usage: filldocx --template <path> --xml {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
+                    Console.WriteLine("usage: filldocx --template <path> --{xml|json} {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
                     return;
                 }
             }
 
-            Console.WriteLine(FillDOCX(template, xml, destfile, novalue, overwrite, pdf, shortTags));
+            Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shortTags));
         }
     }
 }

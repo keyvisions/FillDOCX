@@ -45,7 +45,7 @@
         </Item>
     </Items>
     <actions>
-        <action><do>[hidden]</do></action> <!-- Before Version 0.7.0 this node was not handled correctly -->
+        <action hidden="true"><do></do></action> <!-- Before Version 0.7.0 this node was not handled correctly -->
         <action>
             <do>Verify</do>
             <time hidden="true">30 min</time> <!-- Introduced hidden attribute Version 0.7.0 -->
@@ -54,6 +54,6 @@
             <do hidden="true">Verify integrity</do>
             <time>1 hour</time>
         </action>
-        <action><do>Package</do></action>
+        <action><do>Package</do><time>1 day</time></action>
     </actions>
 </PurchaseOrder>  

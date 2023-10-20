@@ -1,0 +1,79 @@
+{
+    "image1": ".\\media\\logo_dark.png",
+    "hide": "[hidden]",
+    "PurchaseOrderNumber": 99503,
+    "OrderDate": "1999-10-20",
+    "Shipping": {
+        "Name": "Ellen Adams",
+        "Street": "123 Maple Street",
+        "City": "Mill Valley",
+        "State": "CA",
+        "Zip": "10999",
+        "Country": "USA"
+    },
+    "Billing": {
+        "Name": "Tai Yee",
+        "Street": "8 Oak Avenue",
+        "City": "Old Town",
+        "State": "PA",
+        "Zip": "95819",
+        "Country": "USA"
+    },
+    "DeliveryNotes": "Please leave packages in shed by driveway.",
+    "Items": [
+        {
+            "Item": {
+                "PartNumber": "872-AA",
+                "ProductName": "Lawnmower",
+                "Quantity": 1,
+                "USPrice": 148.95,
+                "Comment": "Confirm this is electric"
+            }
+        },
+        {
+            "Item": {
+                "PartNumber": "926-AA",
+                "ProductName": "Baby Monitor",
+                "Quantity": 2,
+                "USPrice": 39.98,
+                "ShipDate": "1999-05-21"
+            }
+        },
+        {
+            "Item": {
+                "PartNumber": "934-AA",
+                "ProductName": "Troll",
+                "Quantity": 20,
+                "USPrice": 39.98,
+                "ShipDate": "1999-05-21"
+            }
+        }
+    ],
+    "actions": [
+        {
+            "action": {
+                "hidden": true,
+                "do": null
+            }
+        },
+        {
+            "action": {
+                "do": "Verify",
+                "time": "[hidden]"
+            }
+        },
+        {
+            "action": {
+                "hidden": true,
+                "do": "[hidden]",
+                "time": "1 hour"
+            }
+        },
+        {
+            "action": {
+                "do": "Package",
+                "time": "1 day"
+            }
+        }
+    ]
+}

@@ -45,13 +45,13 @@ This construct is usefull, for example, to handle purchase orders with multiple 
 ## Instructions
 Clone locally, publish and run
 
-usage: filldocx --template \<path> --xml {\<path>|\<url>|\<raw>} --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--novalue \<string>]
+usage: filldocx --template \<path> --{xml|json} {\<path>|\<url>|\<raw>} --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--novalue \<string>]
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
 `$ dotnet add package FreeSpire.Doc`
 
-`$ dotnet publish`
+`$ dotnet publish --configuration Release`
 
 `$ dotnet run -t ./order.docx -x ./order.xml -d ./document.docx --pdf`
 
