@@ -7,7 +7,7 @@ The code was written in order to give non programmers an intuitive way of creati
 Note that only the first element with an given tag is used.
 
 ## Version 0.9.0
-FillDOCX now accepts JSON data that is transformed in XML and than business as usual. [hidden] bugged.
+FillDOCX now accepts JSON data that is transformed in XML and than business as usual. Fixed @@\<tag>.\<tag>, now it can appear outside of table (see v0.2.0), only the first instance will be rendered.
 
 ## Version 0.8.2
 Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string the end of the command line is not included in args[].

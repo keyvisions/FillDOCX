@@ -39,9 +39,8 @@ namespace FillDOCX
                 {
                     if (nodes[0].HasChildNodes && nodes[0].FirstChild.GetType() != typeof(System.Xml.XmlText) && level == 1)
                     {
-                        // Repeating placeholders MUST be placed inside tables, the subtemplate matches the row containing the placeholder
                         subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + Regex.Escape(tag) + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
-                        if (subtemplate == "")
+                        if (subtemplate.IndexOf("</w:tr>") < subtemplate.Length - 7)
                         {
                             subtemplate = new Regex(@"<w:t>@@" + Regex.Escape(tag) + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
                             if (subtemplate == "")
