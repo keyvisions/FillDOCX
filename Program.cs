@@ -243,8 +243,7 @@ namespace FillDOCX
             {
                 if (name != "")
                     return String.Format("<{0}>{1}</{0}>", name, json2xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + json2xml(_json, "");
-                else
-                    return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
+                return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
             }
 
             regex = new Regex(@"^\s*\[\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -253,8 +252,7 @@ namespace FillDOCX
             {
                 if (name != "")
                     return String.Format("<{0}>{1}</{0}>", name, json2xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + json2xml(_json, "");
-                else
-                    return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
+                return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
             }
 
             regex = new Regex(@"^""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -276,7 +274,8 @@ namespace FillDOCX
 
             regex = new Regex(@"^(?:[\]}]\s*,?\s*)(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             match = regex.Match(json);
-            if (match.Success) {
+            if (match.Success)
+            {
                 _json = match.Groups["rest"].Value;
                 return "";
             }
