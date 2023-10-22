@@ -1,13 +1,13 @@
 # FillDOCX
 
-Given a Microsoft DOCX document (“template”) sprinkled with @@\<tag> constructs, and, XML data that includes elements \<tag>, FillDOCX makes a copy of template and replaces, preserving style, the @@\<tag> occurances with the corresponding XML element content. The XML data may be raw, a file or a URL.
+Given a Microsoft DOCX document (“template”) sprinkled with @@\<tag> constructs, and, XML data that includes \<tag> elements, FillDOCX makes a copy of template and replaces the @@\<tag> occurances with the corresponding \<tag> XML elements' contents. The XML data may be raw, a file path or a URL.
 
-The code was written in order to give non programmers an intuitive way of creating automatic fillable templates, they are invited to create a DOCX document sprinkled with @@\<tags> as they best see fit and are asked either to choose or use predefined understandable canonical names in forming the @@\<tag> constructs; these templates are then filled on request in an intranet context with data fetched from a web service.
+The code was written in order to give non programmers an intuitive way of creating automatic fillable templates, they are invited to create DOCX documents, designed as they best see fit, sprinkled with @@\<tags> chosen from a given set; these templates are then filled on request in an intranet context with data fetched from a web service.
 
-Note that only the first element with an given tag is used.
+![From DOCX template to DOCX document](https://github.com/keyvisions/FillDOCX/blob/master/media/visual.jpg "From DOCX template to DOCX document")
 
 ## Version 0.9.0
-FillDOCX now accepts JSON data that is transformed in XML and then business as usual (see https://github.com/keyvisions/json2xml). Fixed @@\<tag>.\<tag>, now it can appear outside of table (see v0.2.0), only the first instance will be rendered.
+FillDOCX now accepts JSON data that is transformed in XML and then business as usual (see https://github.com/keyvisions/json2xml). Fixed @@\<tag>.\<tag>, now it can appear outside of tables (see v0.2.0), only the first occurance will be rendered.
 
 ## Version 0.8.2
 Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string the end of the command line is not included in args[].
