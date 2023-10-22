@@ -7,7 +7,7 @@ The code was written in order to give non programmers an intuitive way of creati
 ![From DOCX template to DOCX document](https://github.com/keyvisions/FillDOCX/blob/master/media/visual.jpg "From DOCX template to DOCX document")
 
 ## Version 0.9.0
-FillDOCX now accepts JSON data that is transformed in XML and then business as usual (see https://github.com/keyvisions/json2xml). Fixed @@\<tag>.\<tag>, now it can appear outside of tables (see v0.2.0), only the first occurance will be rendered.
+FillDOCX now accepts JSON data, it is transformed in XML and then business as usual (https://github.com/keyvisions/json2xml). Fixed @@\<tag>.\<tag>, now it can appear outside of tables (see v0.2.0), only the first occurance will be rendered.
 
 ## Version 0.8.2
 Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string the end of the command line is not included in args[].
