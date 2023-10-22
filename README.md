@@ -10,7 +10,7 @@ The code was written in order to give non programmers an intuitive way of creati
 FillDOCX now accepts JSON data, it is transformed in XML and then business as usual (https://github.com/keyvisions/json2xml). Fixed @@\<tag>.\<tag>, now it can appear outside of tables (see v0.2.0), only the first occurance will be rendered.
 
 ## Version 0.8.2
-Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string the end of the command line is not included in args[].
+Fixed error reised when --novalue was set equal to the empty string, i.e., --novalue "": an empty string at the end of the command line is not included in args[].
 In Version 0.8.0, when images are replaced, the unconsequential exception "Collection was modified; enumeration operation may not execute." was reised, not anymore. 
 
 ## Version 0.8.1
