@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
@@ -91,9 +92,18 @@ namespace FillDOCX
                     {
                         if (txt.IndexOfAny(Path.GetInvalidPathChars()) == -1)
                         {
-                            StreamReader sr = new StreamReader(txt);
-                            txt = sr.ReadToEnd();
-                            sr.Dispose();
+                            if (txt.StartsWith("http"))
+                            {
+                                WebClient client = new WebClient();
+                                txt = client.DownloadString(txt);
+                                client.Dispose();
+                            }
+                            else
+                            {
+                                StreamReader sr = new StreamReader(txt);
+                                txt = sr.ReadToEnd();
+                                sr.Dispose();
+                            }
                         }
 #if DEBUG
                         Console.Write(json2xml(txt));
