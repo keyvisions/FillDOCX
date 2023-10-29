@@ -95,7 +95,10 @@ namespace FillDOCX
                             txt = sr.ReadToEnd();
                             sr.Dispose();
                         }
+#if DEBUG
                         Console.Write(json2xml(txt));
+#endif
+
                         data.LoadXml(json2xml(txt));
                     }
                     catch (SystemException e)
@@ -284,7 +287,7 @@ namespace FillDOCX
         }
         static void Main(string[] args)
         {
-            string template = @".\order.docx", data = @".\order.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml";
+            string template = @".\template.docx", data = @".\data.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml";
             bool overwrite = false, pdf = false, shortTags = false;
 
             for (int i = 0; i < args.Length; ++i)

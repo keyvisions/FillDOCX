@@ -43,7 +43,7 @@ Improved the @@\<tag>.\<tag> construct introduced in 0.2.0, now, if placed outsi
 
 ## Version 0.2.0
 Introduced the @@\<tag>.\<tag> construct, it _MUST_ be placed inside a table row, with the effect that all children elements of @@\<tag> are rendered in separate rows.
-This construct is usefull, for example, to handle purchase orders with multiple lines, see the order.docx template
+This construct is usefull, for example, to handle purchase orders with multiple lines, see the template.docx template
 
 ## Instructions
 Clone locally, publish and run
@@ -56,6 +56,6 @@ usage: filldocx --template \<path> --{xml|json} {\<path>|\<url>|\<raw>} --destfi
 
 `$ dotnet publish --configuration Release`
 
-`$ dotnet run -t ./order.docx -x ./order.xml -d ./document.docx --pdf`
+`$ dotnet run -t ./template.docx -x ./data.xml -d ./document.docx --pdf`
 
 PDFs can be generated with the [Spire.Doc](https://www.nuget.org/packages/Spire.Doc/) package.
