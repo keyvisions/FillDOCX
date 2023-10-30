@@ -131,7 +131,7 @@ namespace FillDOCX
             try
             {
                 if (template == destfile)
-                    throw new ArgumentException("Template cannot be equal to destination");
+                    throw new ArgumentException("Template cannot be also the destination");
 
                 if (File.Exists(destfile) && !overwrite)
                     goto pdf; // return destfile;
@@ -144,7 +144,7 @@ namespace FillDOCX
                 using (ZipArchive zipArchive = new ZipArchive(File.Open(destfile, FileMode.Open), ZipArchiveMode.Update))
                 {
                     ZipArchiveEntry zipFile;
-                    String[] zipFiles = new String[] { @"word/document.xml", @"word/header1.xml", @"word/header2.xml", @"word/header3.xml", @"word/footer1.xml", @"word/footer2.xml", @"word/footer3.xml" };
+                    String[] zipFiles = new String[] { @"word/document.xml", @"word/header1.xml", @"word/header2.xml", @"word/header3.xml", @"word/header4.xml", @"word/footer1.xml", @"word/footer2.xml", @"word/footer3.xml", @"word/footer4.xml" };
 
                     for (int i = 0; i < zipFiles.Length; ++i)
                     {
