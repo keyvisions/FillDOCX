@@ -6,9 +6,10 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
 using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 3 pages)
-using System.Security.AccessControl;
 using System.Security;
 using System.Data;
+using System.Web;
+using Spire.Doc.Pages;
 
 namespace FillDOCX
 {
@@ -52,11 +53,6 @@ namespace FillDOCX
                         {
                             foreach (XmlElement node in nodes)
                                 value += Fill(subtemplate, node, novalue, level + 1);
-                            if (value.Contains("[hidden]"))
-                            { // Remove whole table
-                                subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + Regex.Escape(subtemplate) + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
-                                value = "";
-                            }
                         }
                     }
                     else if (nodes[0].Attributes.GetNamedItem("hidden") != null)
@@ -67,13 +63,22 @@ namespace FillDOCX
                 if (Regex.Match(tag, @"^image\d+").Success)
                     value = "";
 
-                if (value == "[hidden]")
-                    subtemplate = new Regex(@"<w:tbl>(?:(?!<w:tbl>).)*?" + Regex.Escape(subtemplate) + @".*?<\/w:tbl>", RegexOptions.Compiled).Match(template).Value;
-
                 if (subtemplate != "")
-                    template = template.Replace(subtemplate, value);
+                    template = template.Replace(subtemplate, Html2Xml(value));
             });
             return template;
+        }
+
+        // AttoSimple HTML to OpenXML formatter
+        private static string Html2Xml(string html)
+        {
+            if (false && html.IndexOf("&lt;") != -1)
+            {
+                html = HttpUtility.HtmlDecode(html);
+                html = Regex.Replace(html, @"(<br>|\\r\\n|\\r|\\n)", "</w:t><w:br/><w:t>");
+                html = Regex.Replace(html, "\t", "</w:t><w:tab/><w:t>");
+            }
+            return html;
         }
 
         public static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
@@ -189,6 +194,19 @@ namespace FillDOCX
                         while (placeholder.IsMatch(body) && limit < 5)
                         {
                             body = Fill(body, data.DocumentElement, novalue);
+
+                            // Remove [hidden]
+                            int h = body.IndexOf("[hidden]"), s, e;
+                            while (h != -1) {
+                                s = body.LastIndexOf("<w:tr", h); 
+                                e = body.LastIndexOf("</w:tr>", h);
+                                if (s == -1 || (s != -1 && s < e)) // [hidden] not wrapped inside <w:tr></w:tr> just remove [hidden]
+                                    body = body.Remove(h, 8);
+                                else // [hidden] wrapped inside <w:tr></w:tr> remove whole row
+                                    body = body.Remove(s, body.IndexOf("</w:tr>", h) - s + 7);
+                                h = body.IndexOf("[hidden]");
+                            }
+
                             ++limit;
                         }
 
