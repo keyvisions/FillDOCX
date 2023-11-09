@@ -19,7 +19,7 @@
         "Zip": "95819",
         "Country": "USA"
     },
-    "DeliveryNotes": "<b>Please</b> leave packages<br> in <i>shed</i> by driveway.",
+    "DeliveryNotes": "Please <b>leave</b> packages in shed by driveway.",
     "Items": [
         {
             "Item": {
@@ -27,7 +27,7 @@
                 "ProductName": "Lawnmower",
                 "Quantity": 1,
                 "USPrice": 148.95,
-                "Comment": "Confirm this is electric"
+                "Comment": "Confirm <b>this</b> is electric"
             }
         },
         {

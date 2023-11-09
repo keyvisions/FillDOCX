@@ -8,14 +8,17 @@ using System.IO.Compression;
 using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 3 pages)
 using System.Security;
 using System.Data;
+using System.Linq;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 using System.Web;
-using Spire.Doc.Pages;
+using System.Text;
 
 namespace FillDOCX
 {
     class Program
     {
-        static Regex placeholder = new Regex(@"@@([a-z]\w*)\.?([a-z]\w*)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex PLACEHOLDER = new Regex(@"@@([a-z]\w*)\.?([a-z]\w*)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static string Fill(string template, XmlElement data, string novalue = "***", int level = 1)
         {
@@ -23,7 +26,7 @@ namespace FillDOCX
                 return "";
 
             List<string> tags = new List<string>();
-            foreach (Match match in placeholder.Matches(template))
+            foreach (Match match in PLACEHOLDER.Matches(template))
             {
                 if ((level == 1 || data.Name == match.Groups[1].Value) && !tags.Contains(match.Groups[level].Value))
                     tags.Add(match.Groups[level].Value);
@@ -44,7 +47,8 @@ namespace FillDOCX
                         subtemplate = new Regex(@"<w:tr (?:(?!<w:tr ).)*?@@" + Regex.Escape(tag) + @".*?<\/w:tr>", RegexOptions.Compiled).Match(template).Value;
                         if (subtemplate.IndexOf("</w:tr>") < subtemplate.Length - 7)
                         {
-                            subtemplate = new Regex(@"<w:t>@@" + Regex.Escape(tag) + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
+                            //                            subtemplate = new Regex(@"<w:t>@@" + Regex.Escape(tag) + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
+                            subtemplate = new Regex(@"<w:t>@@" + tag + @".*?<\/w:t>", RegexOptions.Compiled).Match(template).Value;
                             if (subtemplate == "")
                                 return;
                             value += Fill(subtemplate, (XmlElement)nodes[0], novalue, level + 1);
@@ -64,24 +68,42 @@ namespace FillDOCX
                     value = "";
 
                 if (subtemplate != "")
-                    template = template.Replace(subtemplate, Html2Xml(value));
+                {
+                    if (value.IndexOf("altChunk") != -1)
+                        value = HttpUtility.HtmlDecode(value);
+                    template = template.Replace(subtemplate, value);
+                }
             });
             return template;
         }
-
-        // AttoSimple HTML to OpenXML formatter
-        private static string Html2Xml(string html)
+        private static string Cleanup(string body)
         {
-            if (false && html.IndexOf("&lt;") != -1)
-            {
-                html = HttpUtility.HtmlDecode(html);
-                html = Regex.Replace(html, @"(<br>|\\r\\n|\\r|\\n)", "</w:t><w:br/><w:t>");
-                html = Regex.Replace(html, "\t", "</w:t><w:tab/><w:t>");
-            }
-            return html;
-        }
+            Regex PLACEHOLDER = new Regex(@"@@\w+(\.\w+)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Regex USELESS = new Regex(@"^</w:t></w:r><[^/][\s\S]*?(<w:t>|<w:t [\s\S]*?>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.LoadXml(body);
+
+            int s = -2, i = 0; // i to exit potential infinite loop
+            foreach (Match match in PLACEHOLDER.Matches(xmlDoc.InnerText).Cast<Match>())
+            {
+                string tag = match.Value;
+
+                s = body.IndexOf("@@", s + 2);
+                while (!body[s..].StartsWith(tag) && i < 10)
+                {
+                    Match useless = USELESS.Match(body, s + (body.Substring(s, 3) == @"@@<" ? 2 : tag.Length));
+                    if (!useless.Success)
+                        break;
+                    body = body.Remove(useless.Index, useless.Length);
+                    ++i;
+                }
+            }
+            xmlDoc = null;
+
+            return body;
+        }
+        private static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
         {
             XmlDocument data = new XmlDocument();
             data.PreserveWhitespace = true;
@@ -111,10 +133,9 @@ namespace FillDOCX
                             }
                         }
 #if DEBUG
-                        Console.Write(json2xml(txt));
+                        Console.Write(Json2Xml(txt));
 #endif
-
-                        data.LoadXml(json2xml(txt));
+                        data.LoadXml(Json2Xml(txt));
                     }
                     catch (SystemException e)
                     {
@@ -145,6 +166,31 @@ namespace FillDOCX
                     Directory.CreateDirectory(Path.GetDirectoryName(destfile)); // Create directory if it does not exist
 
                 File.Copy(template, destfile, true);
+                // Search for HTML in XML and convert it into altChunks
+                using (WordprocessingDocument docWord = WordprocessingDocument.Open(destfile, true))
+                {
+                    int altChunkId = 1;
+                    MainDocumentPart mainPart = docWord.MainDocumentPart;
+
+                    foreach (XmlNode node in data.SelectNodes("//text()"))
+                    {
+                        if (node.Value.IndexOf('<') == -1)
+                            continue;
+
+                        AlternativeFormatImportPart chunk = mainPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, $"htmlChunk{altChunkId}");
+
+                        using (Stream chunkStream = chunk.GetStream(FileMode.Create, FileAccess.Write))
+                        using (StreamWriter stringStream = new StreamWriter(chunkStream))
+                            stringStream.Write($"<html>{node.Value}</html>");
+
+                        AltChunk altChunk = new AltChunk { Id = $"htmlChunk{altChunkId}" };
+                        node.Value = $"<w:altChunk r:id=\"htmlChunk{altChunkId}\"/>";
+
+                        ++altChunkId;
+                    }
+
+                    mainPart.Document.Save();
+                }
 
                 using (ZipArchive zipArchive = new ZipArchive(File.Open(destfile, FileMode.Open), ZipArchiveMode.Update))
                 {
@@ -162,7 +208,12 @@ namespace FillDOCX
                         reader.Close();
                         zipFile.Delete();
 
+                        body = Cleanup(body);
+
                         // Short tags syntax @[0-9]+ convert to @@v[0-9]+
+                        if (shortTags)
+                            Regex.Replace(body, @"@(\d+)", "@@v$1", RegexOptions.Compiled);
+                        /*
                         if (shortTags == true)
                         {
                             body = body.Replace(@"@", @"@@v");
@@ -172,47 +223,37 @@ namespace FillDOCX
                                 body = body.Replace(match.Value, @"@@v" + match.Groups[1].Value);
                             }
                         }
-                        else
-                        {
-                            // Clean up document.xml: Microsoft Word inserts spurious tags between @@ and <tag> that prevent proper @@<tag> identification.
-                            bool replace;
-                            do
-                            {
-                                MatchCollection matches = new Regex(@"(@@\w*?\.?\w*?)<\/w:t><\/w:r>.*?<w:t( .*?>|>)(.)", RegexOptions.Compiled).Matches(body);
-
-                                replace = false;
-                                foreach (Match match in matches)
-                                    if (System.Char.IsLetterOrDigit(match.Groups[3].Value, 0) || match.Groups[3].Value == @".")
-                                    {
-                                        body = body.Replace(match.Value, match.Groups[1].Value + match.Groups[3].Value);
-                                        replace = true;
-                                    }
-                            } while (replace);
-                        }
-
+                        */
                         int limit = 0;
-                        while (placeholder.IsMatch(body) && limit < 5)
+                        while (PLACEHOLDER.IsMatch(body) && limit < 10)
                         {
                             body = Fill(body, data.DocumentElement, novalue);
 
                             // Remove [hidden]
                             int h = body.IndexOf("[hidden]"), s, e;
-                            while (h != -1) {
-                                s = body.LastIndexOf("<w:tr", h); 
+                            while (h != -1)
+                            {
+                                s = body.LastIndexOf("<w:tr ", h);
                                 e = body.LastIndexOf("</w:tr>", h);
-                                if (s == -1 || (s != -1 && s < e)) // [hidden] not wrapped inside <w:tr></w:tr> just remove [hidden]
-                                    body = body.Remove(h, 8);
+                                if (s == -1 || (s != -1 && s < e))
+                                { // [hidden] not wrapped inside <w:tr></w:tr> 
+                                    s = body.LastIndexOf("<w:p ", h);
+                                    e = body.LastIndexOf("</w:p>", h);
+                                    if (s == -1 || (s != -1 && s < e)) // [hidden] not wrapped inside <w:p></w:p> just remove [hidden]
+                                        body = body.Remove(h, 8);
+                                    else // [hidden] wrapped inside <w:p></w:p> remove whole row
+                                        body = body.Remove(s, body.IndexOf("</w:p>", h) - s + 6);
+                                }
                                 else // [hidden] wrapped inside <w:tr></w:tr> remove whole row
                                     body = body.Remove(s, body.IndexOf("</w:tr>", h) - s + 7);
                                 h = body.IndexOf("[hidden]");
                             }
-
                             ++limit;
                         }
 
                         zipFile = zipArchive.CreateEntry(zipFiles[i]);
                         StreamWriter writer = new StreamWriter(zipFile.Open());
-                        writer.Write(body.Replace("\u000B", @"<w:br/>"));
+                        writer.Write(body);
                         writer.Flush();
                         writer.Close();
                     }
@@ -220,7 +261,7 @@ namespace FillDOCX
                     foreach (ZipArchiveEntry entry in zipArchive.Entries)
                         if (Regex.Match(entry.Name, @"^image\d+").Success)
                         {
-                            XmlNodeList items = data.GetElementsByTagName(entry.Name.Substring(0, entry.Name.IndexOf('.')));
+                            XmlNodeList items = data.GetElementsByTagName(entry.Name[..entry.Name.IndexOf('.')]);
                             if (items.Count > 0 && File.Exists(items[0].InnerText))
                             {
                                 // Console.WriteLine($"Replace {entry.Name} with {items[0].InnerText}");
@@ -250,7 +291,7 @@ namespace FillDOCX
             if (pdf)
             {
                 // dotnet add package Spire.Doc
-                Document dc = new Document();
+                Spire.Doc.Document dc = new Spire.Doc.Document();
                 dc.LoadFromFile(destfile);
                 ToPdfParameterList parms = new ToPdfParameterList()
                 {
@@ -263,36 +304,37 @@ namespace FillDOCX
 
         // https://json.org/json-it.html
         private static string _json = "";
-        private static string json2xml(string json, string name = "root")
+        private static readonly Regex REGEX_NAME = new Regex(@"^\s*\{\s*""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex REGEX_REST = new Regex(@"^\s*\[\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex REGEX_NAME_REST = new Regex(@"^""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex REGEX_VALUE = new Regex(@"^(?<value>true|false|null|-?(?:0|[1-9])[0-9]*(?:\.[0-9]+)?(?:e[\-+]?[0-9]+)?|""(?:\\""|.)*?"")\s*,?\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex REGEX_FINAL = new Regex(@"^(?:[\]}]\s*,?\s*)(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static string Json2Xml(string json, string name = "root")
         {
             if (json == "")
                 return "";
 
-            Regex regex = new Regex(@"^\s*\{\s*""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Match match = regex.Match(json);
+            Match match = REGEX_NAME.Match(json);
             if (match.Success)
             {
                 if (name != "")
-                    return String.Format("<{0}>{1}</{0}>", name, json2xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + json2xml(_json, "");
-                return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
+                    return String.Format("<{0}>{1}</{0}>", name, Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + Json2Xml(_json, "");
+                return Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value) + Json2Xml(_json, "");
             }
 
-            regex = new Regex(@"^\s*\[\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            match = regex.Match(json);
+            match = REGEX_REST.Match(json);
             if (match.Success)
             {
                 if (name != "")
-                    return String.Format("<{0}>{1}</{0}>", name, json2xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + json2xml(_json, "");
-                return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value) + json2xml(_json, "");
+                    return String.Format("<{0}>{1}</{0}>", name, Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + Json2Xml(_json, "");
+                return Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value) + Json2Xml(_json, "");
             }
 
-            regex = new Regex(@"^""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            match = regex.Match(json);
+            match = REGEX_NAME_REST.Match(json);
             if (match.Success)
-                return json2xml(match.Groups["rest"].Value, match.Groups["name"].Value);
+                return Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value);
 
-            regex = new Regex(@"^(?<value>true|false|null|-?(?:0|[1-9])[0-9]*(?:\.[0-9]+)?(?:e[\-+]?[0-9]+)?|""(?:\\""|.)*?"")\s*,?\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            match = regex.Match(json);
+            match = REGEX_VALUE.Match(json);
             if (match.Success)
             {
                 if (name == "" || name == "root")
@@ -300,18 +342,17 @@ namespace FillDOCX
                 string value = match.Groups["value"].Value.Trim('\"');
                 if (value == "null")
                     value = "";
-                return String.Format("<{0}>{1}</{0}>", name, SecurityElement.Escape(value)) + json2xml(match.Groups["rest"].Value);
+                return String.Format("<{0}>{1}</{0}>", name, SecurityElement.Escape(value)) + Json2Xml(match.Groups["rest"].Value);
             }
 
-            regex = new Regex(@"^(?:[\]}]\s*,?\s*)(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            match = regex.Match(json);
+            match = REGEX_FINAL.Match(json);
             if (match.Success)
             {
                 _json = match.Groups["rest"].Value;
                 return "";
             }
 
-            throw new SyntaxErrorException("Invalid JSON syntax");
+            throw new System.Data.SyntaxErrorException("Invalid JSON syntax");
         }
         static void Main(string[] args)
         {
