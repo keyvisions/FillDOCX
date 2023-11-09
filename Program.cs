@@ -192,7 +192,8 @@ namespace FillDOCX
                     mainPart.Document.Save();
                 }
 
-                using (ZipArchive zipArchive = new ZipArchive(File.Open(destfile, FileMode.Open), ZipArchiveMode.Update))
+                FileStream destfileStream = File.Open(destfile, FileMode.Open);
+                using (ZipArchive zipArchive = new ZipArchive(destfileStream, ZipArchiveMode.Update))
                 {
                     ZipArchiveEntry zipFile;
                     String[] zipFiles = new String[] { @"word/document.xml", @"word/header1.xml", @"word/header2.xml", @"word/header3.xml", @"word/header4.xml", @"word/footer1.xml", @"word/footer2.xml", @"word/footer3.xml", @"word/footer4.xml" };
@@ -276,6 +277,7 @@ namespace FillDOCX
                             }
                         }
                 }
+                destfileStream.Close();
             }
             catch (SystemException e)
             {
@@ -299,6 +301,7 @@ namespace FillDOCX
                 };
                 destfile = destfile.Replace(".docx", ".pdf");
                 dc.SaveToFile(destfile, parms);
+                dc.Close();
             }
         }
 
