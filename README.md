@@ -56,7 +56,7 @@ usage: filldocx --template \<path> --{xml|json} {\<path>|\<url>|\<raw>} --destfi
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
-`$ dotnet add package FreeSpire.Doc`
+`$ dotnet restore`
 
 `$ dotnet publish --configuration Release`
 
