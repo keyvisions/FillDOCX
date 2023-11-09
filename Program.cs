@@ -295,7 +295,7 @@ namespace FillDOCX
                 // dotnet add package Spire.Doc
                 Spire.Doc.Document dc = new Spire.Doc.Document();
                 dc.LoadFromFile(destfile);
-                ToPdfParameterList parms = new ToPdfParameterList()
+                Spire.Doc.ToPdfParameterList parms = new Spire.Doc.ToPdfParameterList()
                 {
                     IsEmbeddedAllFonts = true
                 };
