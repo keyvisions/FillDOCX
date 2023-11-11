@@ -80,13 +80,14 @@ namespace FillDOCX
         private static string Cleanup(string body)
         {
             Regex PLACEHOLDER = new Regex(@"@@\w+(\.\w+)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Regex USELESS = new Regex(@"</w:t></w:r><[\s\S]*?(<w:t>|<w:t [\s\S]*?>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Regex USELESS = new Regex(@"</w:t></w:r><[\s\S]*?(<w:t>|<w:t [\s\S]*?>)(?<whitespace>.{1})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(body);
 
             int s = -2, i = 0; // i to exit potential infinite loop
-            foreach (Match match in PLACEHOLDER.Matches(xmlDoc.InnerText).Cast<Match>())
+            MatchCollection matches = PLACEHOLDER.Matches(xmlDoc.InnerText);
+            foreach (Match match in matches.Cast<Match>())
             {
                 string tag = match.Value;
 
@@ -94,9 +95,9 @@ namespace FillDOCX
                 while (!body[s..].StartsWith(tag) && i < 10)
                 {
                     Match useless = USELESS.Match(body, s);
-                    if (!useless.Success || useless.Value[13] == '/')
+                    if (!useless.Success || useless.Value[13] == '/' || char.IsWhiteSpace(useless.Groups["whitespace"].Value, 0))
                         break;
-                    body = body.Remove(useless.Index, useless.Length);
+                    body = body.Remove(useless.Index, useless.Length - 1);
                     ++i;
                 }
             }
@@ -364,41 +365,42 @@ namespace FillDOCX
         }
         static void Main(string[] args)
         {
-            string template = @".\template.docx", data = @".\data.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml";
+            string template = @".\template.docx", data = @".\data.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml", args_path = "";
             bool overwrite = false, pdf = false, shorttags = false, allowhtml = false;
 
-            for (int i = 0; i < args.Length; ++i)
+            try
             {
-                if ((args[i] == "--template" || args[i] == "-t") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
-                    template = args[++i];
-                else if (args[i] == "--xml" || args[i] == "-x")
+                for (int i = 0; i < args.Length; ++i)
                 {
-                    mime = "application/xml";
-                    data = args[++i];
-                }
-                else if (args[i] == "--json")
-                {
-                    mime = "application/json";
-                    data = args[++i];
-                }
-                else if ((args[i] == "--destfile" || args[i] == "-d") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
-                    destfile = args[++i];
-                else if (args[i] == "--overwrite" || args[i] == "-o")
-                    overwrite = true;
-                else if (args[i] == "--novalue")
-                    novalue = i + 1 < args.Length ? args[++i] : "";
-                else if (args[i] == "--shorttags")
-                    shorttags = true;
-                else if (args[i] == "--pdf")
-                    pdf = true;
-                else if (args[i] == "--allowhtml")
-                    allowhtml = true;
-                else
-                {
-                    try
+                    if ((args[i] == "--template" || args[i] == "-t") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
+                        template = args[++i];
+                    else if (args[i] == "--xml" || args[i] == "-x")
                     {
+                        mime = "application/xml";
+                        data = args[++i];
+                    }
+                    else if (args[i] == "--json")
+                    {
+                        mime = "application/json";
+                        data = args[++i];
+                    }
+                    else if ((args[i] == "--destfile" || args[i] == "-d") && args[i + 1].EndsWith(".docx", StringComparison.InvariantCultureIgnoreCase)) // Case sensitive
+                        destfile = args[++i];
+                    else if (args[i] == "--overwrite" || args[i] == "-o")
+                        overwrite = true;
+                    else if (args[i] == "--novalue")
+                        novalue = i + 1 < args.Length ? args[++i] : "";
+                    else if (args[i] == "--shorttags")
+                        shorttags = true;
+                    else if (args[i] == "--pdf")
+                        pdf = true;
+                    else if (args[i] == "--allowhtml")
+                        allowhtml = true;
+                    else
+                    {
+                        args_path = args[i];
                         XmlDocument xmlDoc = new XmlDocument();
-                        xmlDoc.Load(args[i]);
+                        xmlDoc.Load(args_path);
                         template = xmlDoc.SelectSingleNode(@"//template")?.InnerText;
                         data = xmlDoc.SelectSingleNode(@"//data")?.InnerText;
                         mime = xmlDoc.SelectSingleNode(@"//mime")?.InnerText;
@@ -410,12 +412,15 @@ namespace FillDOCX
                         allowhtml = xmlDoc.SelectSingleNode(@"//allowhtml")?.InnerText == "true";
                         xmlDoc = null;
                     }
-                    catch
-                    {
-                        Console.WriteLine(@"usage: filldocx [<args_path>] --template <path> (--xml|--json) (<path>|<url>|<raw>) --destfile <path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue <string>]");
-                        return;
-                    }
                 }
+            }
+            catch (SystemException e)
+            {
+                if (e.HResult == -2146232000)
+                    Console.WriteLine($"{e.Message} [${args_path}]");
+                else
+                    Console.WriteLine(@"usage: filldocx [<args_path>] --template <path> (--xml|--json) (<path>|<url>|<raw>) --destfile <path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue <string>]");
+                return;
             }
             Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shorttags, allowhtml));
         }
