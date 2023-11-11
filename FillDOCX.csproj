@@ -12,7 +12,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
-    <PackageReference Include="FreeSpire.Doc" Version="11.6.0" />
-    <PackageReference Include="Spire.Doc" Version="11.11.0" />
+    <PackageReference Include="FreeSpire.Office" Version="8.2.0" />
   </ItemGroup>
 </Project>

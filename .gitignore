@@ -4,3 +4,4 @@ obj/
 .vscode/
 document.*
 media/*.pdn
+debug.xml

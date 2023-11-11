@@ -52,7 +52,7 @@ This construct is usefull, for example, to handle purchase orders with multiple 
 ## Instructions
 Clone locally, publish and run
 
-usage: filldocx --template \<path> --{xml|json} {\<path>|\<url>|\<raw>} --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--novalue \<string>]
+usage: filldocx [\<args_path>] --template \<path> (--xml|--json) (\<path>|\<url>|\<raw>) --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue \<string>]
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
@@ -62,4 +62,4 @@ usage: filldocx --template \<path> --{xml|json} {\<path>|\<url>|\<raw>} --destfi
 
 `$ dotnet run -t ./template.docx -x ./data.xml -d ./document.docx --pdf`
 
-PDFs can be generated with the [Spire.Doc](https://www.nuget.org/packages/Spire.Doc/) package.
+PDFs can be generated with [Spire.Doc](https://www.e-iceblue.com/Introduce/word-for-net-introduce.html)

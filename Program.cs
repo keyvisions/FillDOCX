@@ -5,7 +5,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
-using Spire.Doc; // dotnet add package FreeSpire.Doc (Free PDF limited to 3 pages)
+using Spire.Doc; // https://www.e-iceblue.com/Introduce/spire-office-for-net-free.html
 using System.Security;
 using System.Data;
 using System.Linq;
@@ -13,6 +13,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Web;
 using System.Text;
+using DocumentFormat.OpenXml;
 
 namespace FillDOCX
 {
@@ -79,7 +80,7 @@ namespace FillDOCX
         private static string Cleanup(string body)
         {
             Regex PLACEHOLDER = new Regex(@"@@\w+(\.\w+)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Regex USELESS = new Regex(@"^</w:t></w:r><[^/][\s\S]*?(<w:t>|<w:t [\s\S]*?>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Regex USELESS = new Regex(@"</w:t></w:r><[\s\S]*?(<w:t>|<w:t [\s\S]*?>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(body);
@@ -92,8 +93,8 @@ namespace FillDOCX
                 s = body.IndexOf("@@", s + 2);
                 while (!body[s..].StartsWith(tag) && i < 10)
                 {
-                    Match useless = USELESS.Match(body, s + (body.Substring(s, 3) == @"@@<" ? 2 : tag.Length));
-                    if (!useless.Success)
+                    Match useless = USELESS.Match(body, s);
+                    if (!useless.Success || useless.Value[13] == '/')
                         break;
                     body = body.Remove(useless.Index, useless.Length);
                     ++i;
@@ -103,7 +104,7 @@ namespace FillDOCX
 
             return body;
         }
-        private static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false)
+        private static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false, bool allowHTML = false)
         {
             XmlDocument data = new XmlDocument();
             data.PreserveWhitespace = true;
@@ -166,30 +167,34 @@ namespace FillDOCX
                     Directory.CreateDirectory(Path.GetDirectoryName(destfile)); // Create directory if it does not exist
 
                 File.Copy(template, destfile, true);
+
                 // Search for HTML in XML and convert it into altChunks
-                using (WordprocessingDocument docWord = WordprocessingDocument.Open(destfile, true))
+                if (allowHTML)
                 {
-                    int altChunkId = 1;
-                    MainDocumentPart mainPart = docWord.MainDocumentPart;
-
-                    foreach (XmlNode node in data.SelectNodes("//text()"))
+                    using (WordprocessingDocument docWord = WordprocessingDocument.Open(destfile, true))
                     {
-                        if (node.Value.IndexOf('<') == -1)
-                            continue;
+                        int altChunkId = 1;
+                        MainDocumentPart mainPart = docWord.MainDocumentPart;
 
-                        AlternativeFormatImportPart chunk = mainPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, $"htmlChunk{altChunkId}");
+                        foreach (XmlNode node in data.SelectNodes("//text()"))
+                        {
+                            if (node.Value.IndexOf('<') == -1)
+                                continue;
 
-                        using (Stream chunkStream = chunk.GetStream(FileMode.Create, FileAccess.Write))
-                        using (StreamWriter stringStream = new StreamWriter(chunkStream))
-                            stringStream.Write($"<html>{node.Value}</html>");
+                            AlternativeFormatImportPart chunk = mainPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, $"htmlChunk{altChunkId}");
 
-                        AltChunk altChunk = new AltChunk { Id = $"htmlChunk{altChunkId}" };
-                        node.Value = $"<w:altChunk r:id=\"htmlChunk{altChunkId}\"/>";
+                            using (Stream chunkStream = chunk.GetStream(FileMode.Create, FileAccess.Write))
+                            using (StreamWriter stringStream = new StreamWriter(chunkStream))
+                                stringStream.Write($"<html>{node.Value}</html>");
 
-                        ++altChunkId;
+                            AltChunk altChunk = new AltChunk { Id = $"htmlChunk{altChunkId}" };
+                            node.Value = $"<w:altChunk r:id=\"htmlChunk{altChunkId}\"/>";
+
+                            ++altChunkId;
+                        }
+
+                        mainPart.Document.Save();
                     }
-
-                    mainPart.Document.Save();
                 }
 
                 FileStream destfileStream = File.Open(destfile, FileMode.Open);
@@ -285,24 +290,24 @@ namespace FillDOCX
                     return String.Format("{0}: {1}", e.GetType().Name, e.Message);
             }
         pdf:
-            CreatePDF(destfile, pdf);
-            return destfile;
+            return CreatePDF(destfile, pdf);
         }
-        private static void CreatePDF(string destfile, bool pdf)
+        private static string CreatePDF(string destfile, bool pdf)
         {
             if (pdf)
             {
                 // dotnet add package Spire.Doc
-                Spire.Doc.Document dc = new Spire.Doc.Document();
-                dc.LoadFromFile(destfile);
+                Spire.Doc.Document pdfDoc = new Spire.Doc.Document();
+                pdfDoc.LoadFromFile(destfile);
                 Spire.Doc.ToPdfParameterList parms = new Spire.Doc.ToPdfParameterList()
                 {
                     IsEmbeddedAllFonts = true
                 };
                 destfile = destfile.Replace(".docx", ".pdf");
-                dc.SaveToFile(destfile, parms);
-                dc.Close();
+                pdfDoc.SaveToFile(destfile, parms);
+                pdfDoc.Close();
             }
+            return destfile;
         }
 
         // https://json.org/json-it.html
@@ -360,7 +365,7 @@ namespace FillDOCX
         static void Main(string[] args)
         {
             string template = @".\template.docx", data = @".\data.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml";
-            bool overwrite = false, pdf = false, shortTags = false;
+            bool overwrite = false, pdf = false, shorttags = false, allowhtml = false;
 
             for (int i = 0; i < args.Length; ++i)
             {
@@ -383,17 +388,36 @@ namespace FillDOCX
                 else if (args[i] == "--novalue")
                     novalue = i + 1 < args.Length ? args[++i] : "";
                 else if (args[i] == "--shorttags")
-                    shortTags = true;
+                    shorttags = true;
                 else if (args[i] == "--pdf")
                     pdf = true;
+                else if (args[i] == "--allowhtml")
+                    allowhtml = true;
                 else
                 {
-                    Console.WriteLine("usage: filldocx --template <path> --{xml|json} {<path>|<url>|<raw>} --destfile <path> [--pdf] [--overwrite] [--shorttags] [--novalue <string>]");
-                    return;
+                    try
+                    {
+                        XmlDocument xmlDoc = new XmlDocument();
+                        xmlDoc.Load(args[i]);
+                        template = xmlDoc.SelectSingleNode(@"//template")?.InnerText;
+                        data = xmlDoc.SelectSingleNode(@"//data")?.InnerText;
+                        mime = xmlDoc.SelectSingleNode(@"//mime")?.InnerText;
+                        destfile = xmlDoc.SelectSingleNode(@"//destfile")?.InnerText;
+                        novalue = xmlDoc.SelectSingleNode(@"//novalue")?.InnerText;
+                        overwrite = xmlDoc.SelectSingleNode(@"//overwrite")?.InnerText == "true";
+                        shorttags = xmlDoc.SelectSingleNode(@"//shorttags")?.InnerText == "true";
+                        pdf = xmlDoc.SelectSingleNode(@"//pdf")?.InnerText == "true";
+                        allowhtml = xmlDoc.SelectSingleNode(@"//allowhtml")?.InnerText == "true";
+                        xmlDoc = null;
+                    }
+                    catch
+                    {
+                        Console.WriteLine(@"usage: filldocx [<args_path>] --template <path> (--xml|--json) (<path>|<url>|<raw>) --destfile <path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue <string>]");
+                        return;
+                    }
                 }
             }
-
-            Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shortTags));
+            Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shorttags, allowhtml));
         }
     }
 }
