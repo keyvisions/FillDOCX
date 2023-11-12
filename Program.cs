@@ -9,17 +9,16 @@ using Spire.Doc; // https://www.e-iceblue.com/Introduce/spire-office-for-net-fre
 using System.Security;
 using System.Data;
 using System.Linq;
+using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Web;
-using System.Text;
-using DocumentFormat.OpenXml;
 
 namespace FillDOCX
 {
     class Program
     {
-        private static readonly Regex PLACEHOLDER = new Regex(@"@@([a-z]\w*)\.?([a-z]\w*)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex PLACEHOLDER = new Regex(@"@@(\w+)(?>\.(\w+))?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private static string Fill(string template, XmlElement data, string novalue = "***", int level = 1)
         {
@@ -77,21 +76,24 @@ namespace FillDOCX
             });
             return template;
         }
+        private static readonly Regex USELESS = new Regex(@"</w:t></w:r><[\s\S]*?(<w:t>|<w:t [\s\S]*?>)(?<whitespace>.{1})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static string Cleanup(string body)
         {
-            Regex PLACEHOLDER = new Regex(@"@@\w+(\.\w+)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Regex USELESS = new Regex(@"</w:t></w:r><[\s\S]*?(<w:t>|<w:t [\s\S]*?>)(?<whitespace>.{1})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(body);
 
-            int s = -2, i = 0; // i to exit potential infinite loop
+            int s = -2, sc, i = 0; // i to exit potential infinite loop
             MatchCollection matches = PLACEHOLDER.Matches(xmlDoc.InnerText);
             foreach (Match match in matches.Cast<Match>())
             {
                 string tag = match.Value;
 
+                sc = body.IndexOf("@</w:t>", s + 2); // Account for degenerate case, stand alone @ at end of a w:t run
                 s = body.IndexOf("@@", s + 2);
+                if (sc != -1 && sc < s)
+                    s = sc;
+
                 while (!body[s..].StartsWith(tag) && i < 10)
                 {
                     Match useless = USELESS.Match(body, s);
@@ -172,29 +174,27 @@ namespace FillDOCX
                 // Search for HTML in XML and convert it into altChunks
                 if (allowHTML)
                 {
-                    using (WordprocessingDocument docWord = WordprocessingDocument.Open(destfile, true))
+                    using WordprocessingDocument docWord = WordprocessingDocument.Open(destfile, true);
+                    int altChunkId = 1;
+                    MainDocumentPart mainPart = docWord.MainDocumentPart;
+
+                    foreach (XmlNode node in data.SelectNodes("//text()"))
                     {
-                        int altChunkId = 1;
-                        MainDocumentPart mainPart = docWord.MainDocumentPart;
+                        if (node.Value.IndexOf('<') == -1)
+                            continue;
 
-                        foreach (XmlNode node in data.SelectNodes("//text()"))
-                        {
-                            if (node.Value.IndexOf('<') == -1)
-                                continue;
+                        AlternativeFormatImportPart chunk = mainPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, $"htmlChunk{altChunkId}");
 
-                            AlternativeFormatImportPart chunk = mainPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, $"htmlChunk{altChunkId}");
+                        using (Stream chunkStream = chunk.GetStream(FileMode.Create, FileAccess.Write))
+                        using (StreamWriter stringStream = new StreamWriter(chunkStream))
+                            stringStream.Write($"<html>{node.Value}</html>");
 
-                            using (Stream chunkStream = chunk.GetStream(FileMode.Create, FileAccess.Write))
-                            using (StreamWriter stringStream = new StreamWriter(chunkStream))
-                                stringStream.Write($"<html>{node.Value}</html>");
-
-                            AltChunk altChunk = new AltChunk { Id = $"htmlChunk{altChunkId}" };
-                            node.Value = $"<w:altChunk r:id=\"htmlChunk{altChunkId}\"/>";
-
-                            ++altChunkId;
-                        }
+                        AltChunk altChunk = new AltChunk { Id = $"htmlChunk{altChunkId}" };
+                        node.Value = $"<w:altChunk r:id=\"htmlChunk{altChunkId}\"/>";
 
                         mainPart.Document.Save();
+
+                        ++altChunkId;
                     }
                 }
 
@@ -307,6 +307,8 @@ namespace FillDOCX
                 destfile = destfile.Replace(".docx", ".pdf");
                 pdfDoc.SaveToFile(destfile, parms);
                 pdfDoc.Close();
+
+                File.Delete(destfile.Replace(".pdf", ".docx"));
             }
             return destfile;
         }

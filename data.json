@@ -19,7 +19,7 @@
         "Zip": "95819",
         "Country": "USA"
     },
-    "DeliveryNotes": "Please <b>leave</b> packages in shed by driveway.",
+    "DeliveryNotes": "Please <b>leave</b> packages<br> in shed by driveway.",
     "Items": [
         {
             "Item": {

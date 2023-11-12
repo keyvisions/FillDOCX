@@ -2,6 +2,6 @@
 bin/
 obj/
 .vscode/
+tests/
 document.*
 media/*.pdn
-debug.xml

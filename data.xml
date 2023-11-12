@@ -20,7 +20,7 @@
         <Zip>95819</Zip>
         <Country>USA</Country>
     </Billing>
-    <DeliveryNotes>Please &lt;b&gt;leave packages&lt;/b&gt; in shed by driveway.</DeliveryNotes>
+    <DeliveryNotes>Please&lt;br&gt; &lt;b&gt;leave packages&lt;/b&gt; in shed by driveway.</DeliveryNotes>
     <Items> <!-- Subnode handling since Version 0.2.0 -->
         <Item>
             <PartNumber>872-AA</PartNumber>

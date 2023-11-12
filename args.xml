@@ -1,11 +1,13 @@
 <args>
-    <template>.\template.docx</template>
-    <mime>application/xml</mime>
-    <data>.\data.xml</data>
-    <destfile>document.docx</destfile>
-    <overwrite>true</overwrite>
-    <shorttags>false</shorttags>
-    <novalue>***</novalue>
-    <pdf>true</pdf>
-    <allowhtml>true</allowhtml>
+    <set name="default">
+        <template>.\template.docx</template>
+        <mime>application/xml</mime>
+        <data>.\data.xml</data>
+        <destfile>document.docx</destfile>
+        <overwrite>true</overwrite>
+        <shorttags>false</shorttags>
+        <novalue>***</novalue>
+        <pdf>true</pdf>
+        <allowhtml>true</allowhtml>
+    </set>
 </args>
