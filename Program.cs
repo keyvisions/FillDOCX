@@ -83,7 +83,7 @@ namespace FillDOCX
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(body);
 
-            int s = -2, sc, i = 0; // i to exit potential infinite loop
+            int s = -2, sc; 
             MatchCollection matches = PLACEHOLDER.Matches(xmlDoc.InnerText);
             foreach (Match match in matches.Cast<Match>())
             {
@@ -94,6 +94,7 @@ namespace FillDOCX
                 if (sc != -1 && sc < s)
                     s = sc;
 
+                int i = 0; // i to exit potential infinite loop
                 while (!body[s..].StartsWith(tag) && i < 10)
                 {
                     Match useless = USELESS.Match(body, s);
