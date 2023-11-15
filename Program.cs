@@ -122,7 +122,7 @@ namespace FillDOCX
                 case "application/json":
                     try
                     {
-                        if (txt.IndexOfAny(Path.GetInvalidPathChars()) == -1)
+                        if (!(txt[0] == '[' || txt[0] == '{') && txt.IndexOfAny(Path.GetInvalidPathChars()) == -1)
                         {
                             if (txt.StartsWith("http"))
                             {
