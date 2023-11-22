@@ -3,5 +3,8 @@ bin/
 obj/
 .vscode/
 tests/
-document.*
+document.docx
+document__.docx
+document.pdf
+document__.pdf
 media/*.pdn

@@ -13,13 +13,15 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Web;
+using System.Collections.ObjectModel;
+using System.Collections;
 
 namespace FillDOCX
 {
     class Program
     {
         private static readonly Regex PLACEHOLDER = new Regex(@"@@(\w+)(?>\.(\w+))?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
+        private static ushort _novalue = 0x0; // Keep track of novalue
         private static string Fill(string template, XmlElement data, string novalue = "***", int level = 1)
         {
             if (data.Attributes.GetNamedItem("hidden") != null)
@@ -39,6 +41,7 @@ namespace FillDOCX
                 if (nodes.Count == 0)
                     nodes = data.GetElementsByTagName(tag.ToLower());
                 string subtemplate = level == 1 ? $"@@{tag}" : $"@@{data.Name}.{tag}", value = novalue;
+                _novalue |= 0x1;
 
                 if (nodes.Count > 0)
                 {
@@ -60,9 +63,15 @@ namespace FillDOCX
                         }
                     }
                     else if (nodes[0].Attributes.GetNamedItem("hidden") != null)
+                    {
                         value = "";
+                        _novalue &= 0x2;
+                    }
                     else
+                    {
                         value = nodes[0].InnerXml;
+                        _novalue &= 0x2;
+                    }
                 }
                 if (Regex.Match(tag, @"^image\d+").Success)
                     value = "";
@@ -73,6 +82,9 @@ namespace FillDOCX
                         value = HttpUtility.HtmlDecode(value);
                     template = template.Replace(subtemplate, value);
                 }
+
+                if ((_novalue & 0x1) == 0x1)
+                    _novalue = 0x2;
             });
             return template;
         }
@@ -83,7 +95,7 @@ namespace FillDOCX
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.LoadXml(body);
 
-            int s = -2, sc; 
+            int s = -2, sc;
             MatchCollection matches = PLACEHOLDER.Matches(xmlDoc.InnerText);
             foreach (Match match in matches.Cast<Match>())
             {
@@ -122,7 +134,7 @@ namespace FillDOCX
                 case "application/json":
                     try
                     {
-                        if (!(txt[0] == '[' || txt[0] == '{') && txt.IndexOfAny(Path.GetInvalidPathChars()) == -1)
+                        if (!Regex.IsMatch(txt, @"\s*[\[{]") && txt.IndexOfAny(Path.GetInvalidPathChars()) == -1)
                         {
                             if (txt.StartsWith("http"))
                             {
@@ -266,30 +278,33 @@ namespace FillDOCX
                         writer.Close();
                     }
 
+                    Dictionary<ZipArchiveEntry, string> images = new Dictionary<ZipArchiveEntry, string>();
                     foreach (ZipArchiveEntry entry in zipArchive.Entries)
+                    {
                         if (Regex.Match(entry.Name, @"^image\d+").Success)
                         {
                             XmlNodeList items = data.GetElementsByTagName(entry.Name[..entry.Name.IndexOf('.')]);
                             if (items.Count > 0 && File.Exists(items[0].InnerText))
-                            {
-                                // Console.WriteLine($"Replace {entry.Name} with {items[0].InnerText}");
-                                try
-                                {
-                                    zipArchive.CreateEntryFromFile(items[0].InnerText, entry.FullName);
-                                    entry.Delete();
-                                }
-                                catch
-                                {
-                                }
-                            }
+                                images.Add(entry, items[0].InnerText);
                         }
+                    }
+                    foreach (KeyValuePair<ZipArchiveEntry, string> image in images)
+                    {
+                        zipArchive.CreateEntryFromFile(image.Value, image.Key.FullName);
+                        image.Key.Delete();
+                    }
                 }
                 destfileStream.Close();
+
+                if ((_novalue & 0x2) == 0x2)
+                {
+                    File.Move(destfile, destfile.Replace(".docx", "__.docx"));
+                    destfile = destfile.Replace(".docx", "__.docx");
+                }
             }
             catch (SystemException e)
             {
-                if (e.GetType().Name != "InvalidOperationException") // Collection was modified; enumeration operation may not execute.
-                    return String.Format("{0}: {1}", e.GetType().Name, e.Message);
+                return String.Format("{0}: {1}", e.GetType().Name, e.Message);
             }
         pdf:
             return CreatePDF(destfile, pdf);
