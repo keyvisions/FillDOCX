@@ -280,14 +280,12 @@ namespace FillDOCX
 
                     Dictionary<ZipArchiveEntry, string> images = new Dictionary<ZipArchiveEntry, string>();
                     foreach (ZipArchiveEntry entry in zipArchive.Entries)
-                    {
                         if (Regex.Match(entry.Name, @"^image\d+").Success)
                         {
                             XmlNodeList items = data.GetElementsByTagName(entry.Name[..entry.Name.IndexOf('.')]);
                             if (items.Count > 0 && File.Exists(items[0].InnerText))
                                 images.Add(entry, items[0].InnerText);
                         }
-                    }
                     foreach (KeyValuePair<ZipArchiveEntry, string> image in images)
                     {
                         zipArchive.CreateEntryFromFile(image.Value, image.Key.FullName);
