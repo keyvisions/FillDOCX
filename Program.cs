@@ -296,8 +296,11 @@ namespace FillDOCX
 
                 if ((_novalue & 0x2) == 0x2)
                 {
-                    File.Move(destfile, destfile.Replace(".docx", "__.docx"));
-                    destfile = destfile.Replace(".docx", "__.docx");
+                    string incompletefile = destfile.Replace(".docx", "__.docx");
+                    if (File.Exists(incompletefile))
+                        File.Delete(incompletefile);
+                    File.Move(destfile, incompletefile);
+                    destfile = incompletefile;
                 }
             }
             catch (SystemException e)
