@@ -80,7 +80,9 @@ namespace FillDOCX
                 {
                     if (value.IndexOf("altChunk") != -1)
                         value = HttpUtility.HtmlDecode(value);
-                    value = Regex.Replace(value, "&amp;", "&");
+                    if (value.IndexOf("&") != -1)
+                        Console.Write(value);
+                    value = Regex.Replace(value, @"&amp;(lt;|gt;|quot;|apos;)", "&$1", RegexOptions.Multiline);
                     template = template.Replace(subtemplate, value);
                 }
 
