@@ -15,6 +15,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using System.Web;
 using System.Collections.ObjectModel;
 using System.Collections;
+using System.Diagnostics;
 
 namespace FillDOCX
 {
@@ -81,6 +82,8 @@ namespace FillDOCX
                     if (value.IndexOf("altChunk") != -1)
                         value = HttpUtility.HtmlDecode(value);
                     value = Regex.Replace(value, @"&amp;(lt;|gt;|quot;|apos;)", "&$1", RegexOptions.Multiline | RegexOptions.Compiled);
+                    value = value.Replace("\\n", "<w:br/>");
+                    value = value.Replace("\\/", "/");
                     template = template.Replace(subtemplate, value);
                 }
 
@@ -229,22 +232,13 @@ namespace FillDOCX
                         reader.Close();
                         zipFile.Delete();
 
-                        body = Cleanup(body);
-
                         // Short tags syntax @[0-9]+ convert to @@v[0-9]+
                         if (shortTags)
-                            Regex.Replace(body, @"@(\d+)", "@@v$1", RegexOptions.Compiled);
-                        /*
-                        if (shortTags == true)
-                        {
-                            body = body.Replace(@"@", @"@@v");
-                            // Clean up document.xml: Microsoft Word inserts spurious tags between @@ and <tag> that prevent proper @@<tag> identification.
-                            foreach (Match match in new Regex(@"@@v<\/w:t><\/w:r>.*?<w:t>([0-9]+)", RegexOptions.Compiled).Matches(body))
-                            {
-                                body = body.Replace(match.Value, @"@@v" + match.Groups[1].Value);
-                            }
-                        }
-                        */
+                            foreach (Match match in new Regex(@"@(\d*)(?:<\/w:t><\/w:r>.*?<w:t>)?(\d+)", RegexOptions.Compiled).Matches(body))
+                                body = body.Replace(match.Value, @"@@v" + match.Groups[1].Value + match.Groups[2].Value);
+                        else
+                            body = Cleanup(body);
+
                         int limit = 0;
                         while (PLACEHOLDER.IsMatch(body) && limit < 10)
                         {

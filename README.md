@@ -6,6 +6,9 @@ The code was written in order to give non programmers an intuitive way of creati
 
 ![From DOCX template to DOCX document](https://github.com/keyvisions/FillDOCX/blob/master/media/visual.jpg "From DOCX template to DOCX document")
 
+## Version 0.9.3
+Fixed shorttags bug.
+
 ## Version 0.9.2
 If a @@\<tag> in the template has no associated value an underscore _ is appended to the name of the document indicating that the document is potentially incomplete.
 
