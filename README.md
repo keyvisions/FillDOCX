@@ -6,6 +6,9 @@ The code was written in order to give non programmers an intuitive way of creati
 
 ![From DOCX template to DOCX document](https://github.com/keyvisions/FillDOCX/blob/master/media/visual.jpg "From DOCX template to DOCX document")
 
+## Version 0.9.4
+Added ignoreincomplete parameter
+
 ## Version 0.9.3
 Fixed shorttags bug.
 

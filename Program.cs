@@ -124,7 +124,7 @@ namespace FillDOCX
 
             return body;
         }
-        private static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false, bool allowHTML = false)
+        private static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false, bool allowHTML = false, bool ignoreincomplete = false)
         {
             XmlDocument data = new XmlDocument();
             data.PreserveWhitespace = true;
@@ -289,7 +289,7 @@ namespace FillDOCX
                 }
                 destfileStream.Close();
 
-                if ((_novalue & 0x2) == 0x2)
+                if ((_novalue & 0x2) == 0x2 && ignoreincomplete == false)
                 {
                     string incompletefile = destfile.Replace(".docx", "__.docx");
                     if (File.Exists(incompletefile))
@@ -380,7 +380,7 @@ namespace FillDOCX
         static void Main(string[] args)
         {
             string template = @".\template.docx", data = @".\data.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml", args_path = "";
-            bool overwrite = false, pdf = false, shorttags = false, allowhtml = false;
+            bool overwrite = false, pdf = false, shorttags = false, allowhtml = false, ignoreincomplete = false;
 
             try
             {
@@ -410,6 +410,8 @@ namespace FillDOCX
                         pdf = true;
                     else if (args[i] == "--allowhtml")
                         allowhtml = true;
+                    else if (args[i] == "--ignoreincomplete")
+                        ignoreincomplete = true;
                     else
                     {
                         args_path = args[i];
@@ -424,6 +426,7 @@ namespace FillDOCX
                         shorttags = xmlDoc.SelectSingleNode(@"//shorttags")?.InnerText == "true";
                         pdf = xmlDoc.SelectSingleNode(@"//pdf")?.InnerText == "true";
                         allowhtml = xmlDoc.SelectSingleNode(@"//allowhtml")?.InnerText == "true";
+                        ignoreincomplete = xmlDoc.SelectSingleNode(@"//ignoreincomplete")?.InnerText == "false";
                         xmlDoc = null;
                     }
                 }
@@ -433,10 +436,10 @@ namespace FillDOCX
                 if (e.HResult == -2146232000)
                     Console.WriteLine($"{e.Message} [${args_path}]");
                 else
-                    Console.WriteLine(@"usage: filldocx [<args_path>] --template <path> (--xml|--json) (<path>|<url>|<raw>) --destfile <path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue <string>]");
+                    Console.WriteLine(@"usage: filldocx [<args_path>] --template <path> (--xml|--json) (<path>|<url>|<raw>) --destfile <path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue <string>] [--ignoreincomplete]");
                 return;
             }
-            Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shorttags, allowhtml));
+            Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shorttags, allowhtml, ignoreincomplete));
         }
     }
 }
