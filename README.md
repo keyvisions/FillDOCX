@@ -61,7 +61,7 @@ This construct is usefull, for example, to handle purchase orders with multiple 
 ## Instructions
 Clone locally, publish and run
 
-usage: filldocx [\<args_path>] --template \<path> (--xml|--json) (\<path>|\<url>|\<raw>) --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue \<string>]
+usage: filldocx [\<args_path>] --template \<path> (--xml|--json) (\<path>|\<url>|\<raw>) --destfile \<path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue \<string>] [--ignoreincomplete]
 
 `$ git clone https://github.com/keyvisions/FillDOCX.git`
 
