@@ -1,6 +1,6 @@
 # FillDOCX
 
-Given a Microsoft DOCX document (“template”) sprinkled with @@\<tag> constructs, and an XML that includes \<tag> elements, FillDOCX makes a copy of template and replaces the @@\<tag> occurances with the corresponding \<tag> XML elements' contents. The XML data may be raw, a file path or a URL. JSON may be used in place of XML, in this case the key "tag" is used for mapping.
+Given a Microsoft DOCX document (“template”) sprinkled with @@placeholder constructs, and an XML that includes \<placeholder> elements, FillDOCX makes a copy of template and replaces the @@placeholder occurances with the corresponding \<placeholder> XML elements' contents. The XML data may be raw, a file path or a URL. JSON may be used in place of XML, in this case the key "placeholder" is used for mapping.
 
 The code was written in order to give non programmers an intuitive way of creating automatic fillable templates, they are invited to create DOCX documents, designed as they best see fit, sprinkled with @@\<tags> chosen from a given set; these templates are then filled on request in an intranet context with data fetched from a web service.
 
