@@ -1,17 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <Version>0.9.4</Version>
+    <Version>0.9.5</Version>
     <Company>KeyVisions</Company>
     <Authors>Giancarlo Trevisan</Authors>
     <Product>FillDOCX</Product>
-    <Description>Merge DOCX document and XML file: XML elements are referenced with @@&lt;name&gt;</Description>
+    <Description>Merge a DOCX document, sprinkled with placeholders, with data in an XML or JSON file: placeholders are canonical words preceeded by @@, e.g., @@city, in the XML file there will be something like &lt;city&gt;Boston&lt;/city&gt; while in JSON "city": "Boston".</Description>
     <Copyright>©2020</Copyright>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="FreeSpire.Office" Version="8.2.0" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
   </ItemGroup>
 </Project>

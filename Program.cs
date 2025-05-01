@@ -1,21 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.IO.Compression;
 using Spire.Doc; // https://www.e-iceblue.com/Introduce/spire-office-for-net-free.html
-using System.Security;
 using System.Data;
 using System.Linq;
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using System.Web;
-using System.Collections.ObjectModel;
-using System.Collections;
-using System.Diagnostics;
+using System.Text.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
+using QRCoder;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace FillDOCX
 {
@@ -124,7 +124,7 @@ namespace FillDOCX
 
 			return body;
 		}
-		private static string FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false, bool allowHTML = false, bool ignoreincomplete = false)
+		private static async Task<string> FillDOCX(string template, string mime, string txt, string destfile, string novalue, bool overwrite = false, bool pdf = false, bool shortTags = false, bool allowHTML = false, bool ignoreincomplete = false)
 		{
 			XmlDocument data = new XmlDocument();
 			data.PreserveWhitespace = true;
@@ -142,21 +142,18 @@ namespace FillDOCX
 						{
 							if (txt.StartsWith("http"))
 							{
-								WebClient client = new WebClient();
-								txt = client.DownloadString(txt);
-								client.Dispose();
+								txt = await FetchDataAsync(txt);
 							}
 							else
 							{
-								StreamReader sr = new StreamReader(txt);
+								using StreamReader sr = new StreamReader(txt);
 								txt = sr.ReadToEnd();
-								sr.Dispose();
 							}
 						}
 #if DEBUG
-						Console.Write(Json2Xml(txt));
+						Console.Write(JsonToXml(txt));
 #endif
-						data.LoadXml(Json2Xml(txt));
+						data.LoadXml(JsonToXml(txt));
 					}
 					catch (SystemException e)
 					{
@@ -279,13 +276,29 @@ namespace FillDOCX
 						{
 							string image = entry.Name[..entry.Name.IndexOf('.')];
 							XmlNodeList items = data.SelectNodes("//" + image + "|//" + image.ToUpper());
-							// XmlNodeList items = data.GetElementsByTagName(entry.Name[..entry.Name.IndexOf('.')]);
-							if (items.Count > 0 && File.Exists(items[0].InnerText))
+							if (items.Count > 0 && (items[0].InnerText.StartsWith("qrcode://") || File.Exists(items[0].InnerText)))
 								images.Add(entry, items[0].InnerText);
 						}
 					foreach (KeyValuePair<ZipArchiveEntry, string> image in images)
 					{
-						zipArchive.CreateEntryFromFile(image.Value, image.Key.FullName);
+						if (image.Value.StartsWith("qrcode://"))
+						{
+							string qrCodePath = Path.Combine(Path.GetTempPath(), $"{image.Key.Name}.png");
+
+							// Generate QR code if the image file does not exist
+							using QRCoder.QRCodeGenerator qrGenerator = new QRCoder.QRCodeGenerator();
+							using QRCoder.QRCodeData qrCodeData = qrGenerator.CreateQrCode(image.Value.Substring(9), QRCoder.QRCodeGenerator.ECCLevel.Q);
+							using QRCoder.BitmapByteQRCode qrCode = new QRCoder.BitmapByteQRCode(qrCodeData);
+							using (MemoryStream ms = new MemoryStream(qrCode.GetGraphic(20)))
+							using (Bitmap qrCodeImage = new Bitmap(ms))
+
+								qrCodeImage.Save(qrCodePath, ImageFormat.Png);
+							zipArchive.CreateEntryFromFile(qrCodePath, image.Key.FullName);
+							File.Delete(qrCodePath); // Clean up the temporary QR code image
+						}
+						else
+							zipArchive.CreateEntryFromFile(image.Value, image.Key.FullName);
+
 						image.Key.Delete();
 					}
 				}
@@ -327,59 +340,81 @@ namespace FillDOCX
 			return destfile;
 		}
 
-		// https://json.org/json-it.html
-		private static string _json = "";
-		private static readonly Regex REGEX_NAME = new Regex(@"^\s*\{\s*""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex REGEX_REST = new Regex(@"^\s*\[\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex REGEX_NAME_REST = new Regex(@"^""(?<name>[a-z0-9_]+?)""\s*:\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex REGEX_VALUE = new Regex(@"^(?<value>true|false|null|-?(?:0|[1-9])[0-9]*(?:\.[0-9]+)?(?:e[\-+]?[0-9]+)?|""(?:\\""|.)*?"")\s*,?\s*(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static readonly Regex REGEX_FINAL = new Regex(@"^(?:[\]}]\s*,?\s*)(?<rest>[\s\S]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-		private static string Json2Xml(string json, string name = "root")
+		private static string JsonToXml(string json, string rootElement = "root")
 		{
-			if (json == "")
-				return "";
-
-			Match match = REGEX_NAME.Match(json);
-			if (match.Success)
+			try
 			{
-				if (name != "")
-					return String.Format("<{0}>{1}</{0}>", name, Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + Json2Xml(_json, "");
-				return Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value) + Json2Xml(_json, "");
+				using JsonDocument document = JsonDocument.Parse(json);
+				XmlDocument xmlDoc = new XmlDocument();
+				XmlElement root = xmlDoc.CreateElement(rootElement);
+				xmlDoc.AppendChild(root);
+				ConvertJsonToXml(document.RootElement, root, xmlDoc);
+				return xmlDoc.OuterXml;
 			}
-
-			match = REGEX_REST.Match(json);
-			if (match.Success)
+			catch (JsonException ex)
 			{
-				if (name != "")
-					return String.Format("<{0}>{1}</{0}>", name, Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value)) + Json2Xml(_json, "");
-				return Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value) + Json2Xml(_json, "");
+				throw new ArgumentException("Invalid JSON format", ex);
 			}
-
-			match = REGEX_NAME_REST.Match(json);
-			if (match.Success)
-				return Json2Xml(match.Groups["rest"].Value, match.Groups["name"].Value);
-
-			match = REGEX_VALUE.Match(json);
-			if (match.Success)
-			{
-				if (name == "" || name == "root")
-					name = "value";
-				string value = match.Groups["value"].Value.Trim('\"');
-				if (value == "null")
-					value = "";
-				return String.Format("<{0}>{1}</{0}>", name, SecurityElement.Escape(value)) + Json2Xml(match.Groups["rest"].Value);
-			}
-
-			match = REGEX_FINAL.Match(json);
-			if (match.Success)
-			{
-				_json = match.Groups["rest"].Value;
-				return "";
-			}
-
-			throw new System.Data.SyntaxErrorException("Invalid JSON syntax");
 		}
-		static void Main(string[] args)
+
+		private static void ConvertJsonToXml(JsonElement jsonElement, XmlElement parentElement, XmlDocument xmlDoc)
+		{
+			switch (jsonElement.ValueKind)
+			{
+				case JsonValueKind.Object:
+					foreach (JsonProperty property in jsonElement.EnumerateObject())
+					{
+						XmlElement childElement = xmlDoc.CreateElement(property.Name);
+						parentElement.AppendChild(childElement);
+						ConvertJsonToXml(property.Value, childElement, xmlDoc);
+					}
+					break;
+
+				case JsonValueKind.Array:
+					foreach (JsonElement arrayElement in jsonElement.EnumerateArray())
+					{
+						XmlElement arrayItem = xmlDoc.CreateElement("Item");
+						parentElement.AppendChild(arrayItem);
+						ConvertJsonToXml(arrayElement, arrayItem, xmlDoc);
+					}
+					break;
+
+				case JsonValueKind.String:
+					parentElement.InnerText = jsonElement.GetString();
+					break;
+
+				case JsonValueKind.Number:
+					parentElement.InnerText = jsonElement.GetRawText();
+					break;
+
+				case JsonValueKind.True:
+				case JsonValueKind.False:
+					parentElement.InnerText = jsonElement.GetBoolean().ToString();
+					break;
+
+				case JsonValueKind.Null:
+					// Leave the element empty for null values
+					break;
+
+				default:
+					throw new NotSupportedException($"Unsupported JSON value kind: {jsonElement.ValueKind}");
+			}
+		}
+
+		private static async Task<string> FetchDataAsync(string url)
+		{
+			using HttpClient client = new HttpClient();
+			try
+			{
+				return await client.GetStringAsync(url);
+			}
+			catch (HttpRequestException ex)
+			{
+				throw new Exception($"Error fetching data from URL: {url}", ex);
+			}
+		}
+
+		static async Task Main(string[] args)
 		{
 			string template = @".\template.docx", data = @".\data.xml", destfile = @"document.docx", novalue = @"***", mime = "application/xml", args_path = "";
 			bool overwrite = false, pdf = false, shorttags = false, allowhtml = false, ignoreincomplete = false;
@@ -441,7 +476,10 @@ namespace FillDOCX
 					Console.WriteLine(@"usage: filldocx [<args_path>] --template <path> (--xml|--json) (<path>|<url>|<raw>) --destfile <path> [--pdf] [--overwrite] [--shorttags] [--allowhtml] [--novalue <string>] [--ignoreincomplete]");
 				return;
 			}
-			Console.WriteLine(FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shorttags, allowhtml, ignoreincomplete));
+
+			// Await the asynchronous FillDOCX method
+			string result = await FillDOCX(template, mime, data, destfile, novalue, overwrite, pdf, shorttags, allowhtml, ignoreincomplete);
+			Console.WriteLine(result);
 		}
 	}
 }

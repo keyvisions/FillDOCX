@@ -1,5 +1,6 @@
 {
     "image1": ".\\media\\logo_dark.png",
+    "image2": "qrcode://Hello World!",
     "hide": "[hidden]",
     "PurchaseOrderNumber": 99503,
     "OrderDate": "1999-10-20",

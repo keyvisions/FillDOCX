@@ -1,10 +1,13 @@
 # FillDOCX
 
-Given a Microsoft DOCX document (“template”) sprinkled with @@\<tag> constructs, and, XML data that includes \<tag> elements, FillDOCX makes a copy of template and replaces the @@\<tag> occurances with the corresponding \<tag> XML elements' contents. The XML data may be raw, a file path or a URL.
+Given a Microsoft DOCX document (“template”) sprinkled with @@\<tag> constructs, and an XML that includes \<tag> elements, FillDOCX makes a copy of template and replaces the @@\<tag> occurances with the corresponding \<tag> XML elements' contents. The XML data may be raw, a file path or a URL. JSON may be used in place of XML, in this case the key "tag" is used for mapping.
 
 The code was written in order to give non programmers an intuitive way of creating automatic fillable templates, they are invited to create DOCX documents, designed as they best see fit, sprinkled with @@\<tags> chosen from a given set; these templates are then filled on request in an intranet context with data fetched from a web service.
 
 ![From DOCX template to DOCX document](https://github.com/keyvisions/FillDOCX/blob/master/media/visual.jpg "From DOCX template to DOCX document")
+
+## Version 0.9.5
+Document images (see Version 0.8.0), if the image path starts with qrcode:// a QR Code is generated that QR codes the text that follows, e.g., `qrcode://Hello World!` will generate the QR Code `Hello World!`
 
 ## Version 0.9.4
 Added ignoreincomplete parameter
@@ -72,3 +75,5 @@ usage: filldocx [\<args_path>] --template \<path> (--xml|--json) (\<path>|\<url>
 `$ dotnet run -t ./template.docx -x ./data.xml -d ./document.docx --pdf`
 
 PDFs can be generated with [Spire.Doc](https://www.e-iceblue.com/Introduce/word-for-net-introduce.html)
+
+Works only in Windows .Net 9.0
