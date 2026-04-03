@@ -6,6 +6,9 @@ The code was written in order to give non programmers an intuitive way of creati
 
 ![From DOCX template to DOCX document](https://github.com/keyvisions/FillDOCX/blob/master/media/visual.jpg "From DOCX template to DOCX document")
 
+## Version 0.9.6
+Manage nested placeholders, i.e. @@placeholder.placeholder, not inside tables, their value will be the set to the first corresponding element in the XML.
+
 ## Version 0.9.5
 Document images (see Version 0.8.0), if the image path starts with qrcode:// a QR Code is generated that QR codes the text that follows, e.g., `qrcode://Hello World!` will generate the QR Code `Hello World!`
 

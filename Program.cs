@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using QRCoder;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 
 namespace FillDOCX
 {
@@ -95,7 +96,6 @@ namespace FillDOCX
 		private static readonly Regex USELESS = new Regex(@"</w:t></w:r><[\s\S]*?(<w:t>|<w:t [\s\S]*?>)(?<whitespace>.{1})", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 		private static string Cleanup(string body)
 		{
-
 			XmlDocument xmlDoc = new XmlDocument();
 			xmlDoc.LoadXml(body);
 
@@ -121,6 +121,10 @@ namespace FillDOCX
 				}
 			}
 			xmlDoc = null;
+
+			// Rename all nested placeholders not within <w:tr ...</w:tr> to §§ preventing them from being processed in the next step by first replacing all @@ with §§, then restore the ones within <w:tr ...</w:tr> back to @@
+			body = Regex.Replace(body, @"@@(\w+\.\w+)", @"§§$1", RegexOptions.Compiled);
+			body = Regex.Replace(body, @"(<w:tr .*?§§\w+\.\w+.*?<\/w:tr>)", m => m.Value.Replace("§§", "@@"), RegexOptions.Compiled);
 
 			return body;
 		}
@@ -240,6 +244,25 @@ namespace FillDOCX
 						while (PLACEHOLDER.IsMatch(body) && limit < 10)
 						{
 							body = Fill(body, data.DocumentElement, novalue);
+
+							// Replace all §§ nested placeholders with corresponding XML first logical values
+							body = Regex.Replace(body, @"§§(\w+\.\w+)", m =>
+							{
+								string[] parts = m.Groups[1].Value.Split('.');
+								XmlNodeList nodes = data.GetElementsByTagName(parts[0]);
+								if (nodes.Count == 0)
+									nodes = data.GetElementsByTagName(parts[0].ToLower());
+								foreach (XmlElement node in nodes)
+									if (node.Name == parts[0] && node.Attributes.GetNamedItem("hidden") == null)
+									{
+										XmlNodeList subnodes = node.GetElementsByTagName(parts[1]);
+										if (subnodes.Count == 0)
+											subnodes = node.GetElementsByTagName(parts[1].ToLower());
+										if (subnodes.Count > 0 && subnodes[0].Attributes.GetNamedItem("hidden") == null)
+											return subnodes[0].InnerXml;
+									}
+								return novalue;
+							}, RegexOptions.Compiled);
 
 							// Remove [hidden]
 							int h = body.IndexOf("[hidden]"), s, e;

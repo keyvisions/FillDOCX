@@ -3,7 +3,7 @@
     <OutputType>exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <Version>0.9.5</Version>
+    <Version>0.9.6</Version>
     <Company>KeyVisions</Company>
     <Authors>Giancarlo Trevisan</Authors>
     <Product>FillDOCX</Product>
